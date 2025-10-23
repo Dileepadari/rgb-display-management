@@ -158,7 +158,7 @@ export function DeviceManagerComplete() {
       )}
 
       <div className="grid gap-4">
-        {devices?.map((device) => (
+        {(Array.isArray(devices) ? devices : [])?.map((device) => (
           <Card key={device.id}>
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">

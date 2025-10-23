@@ -144,7 +144,7 @@ export function MoodBoardComplete() {
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Available Moods</h3>
           <div className="grid grid-cols-2 gap-4">
-            {moods.map((mood) => (
+            {(Array.isArray(moods) ? moods : []).map((mood) => (
               <Card
                 key={mood.id}
                 className="p-4 border-primary/20 bg-card/50 backdrop-blur hover:border-primary/40 transition-colors cursor-pointer"
@@ -166,10 +166,10 @@ export function MoodBoardComplete() {
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Apply to Devices</h3>
           <div className="space-y-2">
-            {devices.length === 0 ? (
+            {!Array.isArray(devices) || devices.length === 0 ? (
               <p className="text-muted-foreground text-sm">No devices available</p>
             ) : (
-              devices.map((device) => (
+              (Array.isArray(devices) ? devices : []).map((device) => (
                 <Card key={device.id} className="p-4 border-primary/20 bg-card/50 backdrop-blur">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{device.name}</span>

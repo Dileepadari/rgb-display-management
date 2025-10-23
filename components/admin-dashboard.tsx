@@ -3,6 +3,46 @@
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import useSWR from "swr"
+
+interface Device {
+  id: string
+  name: string
+  status: 'online' | 'offline' | 'idle'
+  type: string
+  ip: string
+  mqtt_topic: string
+  user_id: string
+  created_at: string
+  updated_at: string
+}
+
+interface Scene {
+  id: string
+  name: string
+  description: string
+  created_at: string
+  updated_at: string
+}
+
+interface Playlist {
+  id: string
+  name: string
+  description: string
+  active: boolean
+  created_at: string
+  updated_at: string
+}
+
+interface Mood {
+  id: string
+  name: string
+  description: string
+  color: string
+  animation: string
+  created_at: string
+  updated_at: string
+}
 import {
   LineChart,
   Line,
@@ -31,55 +71,111 @@ import {
   Eye,
 } from "lucide-react"
 
+const fetcher = (url: string) => fetch(url).then((r) => r.json())
+
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
 
-  // Analytics data
-  const analyticsData = [
-    { month: "Jan", devices: 45, scenes: 120, playlists: 30 },
-    { month: "Feb", devices: 52, scenes: 145, playlists: 38 },
-    { month: "Mar", devices: 48, scenes: 135, playlists: 35 },
-    { month: "Apr", devices: 61, scenes: 165, playlists: 45 },
-    { month: "May", devices: 55, scenes: 150, playlists: 42 },
-    { month: "Jun", devices: 67, scenes: 180, playlists: 52 },
-  ]
+  const { data: devices = [] } = useSWR('/api/devices', fetcher)
+  const { data: scenes = [] } = useSWR('/api/scenes', fetcher)
+  const { data: playlists = [] } = useSWR('/api/playlists', fetcher)
+  const { data: moods = [] } = useSWR('/api/moods', fetcher)
 
+  const analyticsData = Array.from({ length: 6 }, (_, i) => {
+    const month = new Date()
+    month.setMonth(month.getMonth() - 5 + i)
+    return {
+      month: month.toLocaleString('default', { month: 'short' }),
+      devices: devices?.length || 0,
+      scenes: scenes?.length || 0,
+      playlists: playlists?.length || 0,
+    }
+  })
+
+  // Calculate device status statistics
   const deviceStatusData = [
-    { name: "Online", value: 156, color: "#10b981" },
-    { name: "Offline", value: 12, color: "#ef4444" },
-    { name: "Idle", value: 32, color: "#f59e0b" },
-  ]
-
-  const systemHealthData = [
-    { metric: "CPU Usage", value: 45, status: "good" },
-    { metric: "Memory", value: 62, status: "good" },
-    { metric: "Network", value: 38, status: "good" },
-    { metric: "Storage", value: 71, status: "warning" },
-  ]
-
-  const recentUsers = [
-    { id: 1, name: "John Doe", email: "john@example.com", devices: 5, status: "active", joined: "2024-01-15" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", devices: 3, status: "active", joined: "2024-02-20" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com", devices: 8, status: "inactive", joined: "2024-01-10" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", devices: 2, status: "active", joined: "2024-03-05" },
-    { id: 5, name: "Charlie Wilson", email: "charlie@example.com", devices: 6, status: "active", joined: "2024-02-28" },
-  ]
-
-  const systemLogs = [
-    { id: 1, timestamp: "2024-06-15 14:32:10", event: "Device connected", severity: "info", user: "System" },
-    { id: 2, timestamp: "2024-06-15 14:28:45", event: "Scene updated", severity: "info", user: "John Doe" },
-    {
-      id: 3,
-      timestamp: "2024-06-15 14:15:22",
-      event: "High memory usage detected",
-      severity: "warning",
-      user: "System",
+    { 
+      name: "Online", 
+      value: (Array.isArray(devices) ? devices : []).filter((d: Device) => d.status === 'online').length, 
+      color: "#10b981" 
     },
-    { id: 4, timestamp: "2024-06-15 14:02:18", event: "Playlist executed", severity: "info", user: "Jane Smith" },
-    { id: 5, timestamp: "2024-06-15 13:45:30", event: "Device offline", severity: "error", user: "System" },
+    { 
+      name: "Offline", 
+      value: (Array.isArray(devices) ? devices : []).filter((d: Device) => d.status === 'offline').length, 
+      color: "#ef4444" 
+    },
+    { 
+      name: "Idle", 
+      value: (Array.isArray(devices) ? devices : []).filter((d: Device) => d.status === 'idle').length, 
+      color: "#f59e0b" 
+    },
   ]
+
+  // Fetch system health metrics
+  const { data: healthData } = useSWR('/api/sync-config', fetcher)
+  
+  const systemHealthData = [
+    { 
+      metric: "Online Devices", 
+      value: ((Array.isArray(devices) ? devices : []).filter((d: Device) => d.status === 'online').length) / ((Array.isArray(devices) ? devices : []).length || 1) * 100, 
+      status: "good" 
+    },
+    { 
+      metric: "Active Playlists", 
+      value: ((Array.isArray(playlists) ? playlists : []).filter((p: Playlist) => p.active).length) / ((Array.isArray(playlists) ? playlists : []).length || 1) * 100, 
+      status: "good" 
+    },
+    { 
+      metric: "System Uptime", 
+      value: healthData?.uptime || 99,
+      status: "good" 
+    },
+    { 
+      metric: "Message Queue", 
+      value: healthData?.mqttConnected ? 100 : 0, 
+      status: healthData?.mqttConnected ? "good" : "warning" 
+    },
+  ]
+
+  interface User {
+    id: string
+    email: string
+    profile: {
+      name: string
+      active: boolean
+      joined: string
+    }
+  }
+
+  interface SystemLog {
+    id: string
+    timestamp: string
+    event: string
+    severity: 'error' | 'warning' | 'info'
+    user: string
+  }
+
+  const { data: users = [] } = useSWR<User[]>('/api/users', fetcher)
+  const { data: logs = [] } = useSWR<SystemLog[]>('/api/system-logs', fetcher)
+
+  const recentUsers = users.map(user => ({
+    id: user.id,
+    name: user.profile?.name || 'Unknown',
+    email: user.email,
+    devices: devices?.filter((d: Device) => d.user_id === user.id)?.length || 0,
+    status: user.profile?.active ? 'active' as const : 'inactive' as const,
+    joined: user.profile?.joined || new Date().toISOString().split('T')[0]
+  })).slice(0, 5)
+
+  const systemLogs = logs.map(log => ({
+    id: log.id,
+    timestamp: new Date(log.timestamp).toLocaleString(),
+    event: log.event,
+    severity: log.severity,
+    user: log.user
+  })).slice(0, 5)
 
   const filteredUsers = recentUsers.filter((user) => {
     const matchesSearch =
@@ -89,7 +185,7 @@ const AdminDashboard = () => {
     return matchesSearch && matchesStatus
   })
 
-  const getSeverityColor = (severity) => {
+  const getSeverityColor = (severity: 'error' | 'warning' | 'info') => {
     switch (severity) {
       case "error":
         return "text-red-500"
@@ -100,7 +196,7 @@ const AdminDashboard = () => {
     }
   }
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status: 'active' | 'inactive') => {
     return status === "active" ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"
   }
 
@@ -150,8 +246,8 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-muted-foreground text-sm">Total Devices</p>
-                  <p className="text-3xl font-bold mt-2">200</p>
-                  <p className="text-green-500 text-sm mt-2">+12 this month</p>
+                  <p className="text-3xl font-bold mt-2">{devices?.length || 0}</p>
+                  <p className="text-green-500 text-sm mt-2">Connected and Ready</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
                   <Activity className="w-6 h-6 text-primary" />
@@ -162,12 +258,12 @@ const AdminDashboard = () => {
             <Card className="p-6 border-accent/20 bg-card/50 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Active Users</p>
-                  <p className="text-3xl font-bold mt-2">1,234</p>
-                  <p className="text-green-500 text-sm mt-2">+8% from last week</p>
+                  <p className="text-muted-foreground text-sm">Available Scenes</p>
+                  <p className="text-3xl font-bold mt-2">{scenes?.length || 0}</p>
+                  <p className="text-green-500 text-sm mt-2">Ready to Display</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-accent" />
+                  <TrendingUp className="w-6 h-6 text-accent" />
                 </div>
               </div>
             </Card>
@@ -175,12 +271,12 @@ const AdminDashboard = () => {
             <Card className="p-6 border-secondary/20 bg-card/50 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Total Scenes</p>
-                  <p className="text-3xl font-bold mt-2">5,678</p>
-                  <p className="text-green-500 text-sm mt-2">+234 this month</p>
+                  <p className="text-muted-foreground text-sm">Active Playlists</p>
+                  <p className="text-3xl font-bold mt-2">{playlists?.length || 0}</p>
+                  <p className="text-green-500 text-sm mt-2">In Rotation</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-secondary/20 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-secondary" />
+                  <Users className="w-6 h-6 text-secondary" />
                 </div>
               </div>
             </Card>
@@ -188,9 +284,9 @@ const AdminDashboard = () => {
             <Card className="p-6 border-destructive/20 bg-card/50 backdrop-blur">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">System Alerts</p>
-                  <p className="text-3xl font-bold mt-2">3</p>
-                  <p className="text-yellow-500 text-sm mt-2">1 critical</p>
+                  <p className="text-muted-foreground text-sm">Available Moods</p>
+                  <p className="text-3xl font-bold mt-2">{moods?.length || 0}</p>
+                  <p className="text-green-500 text-sm mt-2">Ready to Apply</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-destructive/20 flex items-center justify-center">
                   <AlertCircle className="w-6 h-6 text-destructive" />

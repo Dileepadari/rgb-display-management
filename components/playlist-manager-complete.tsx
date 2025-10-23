@@ -153,7 +153,7 @@ export function PlaylistManagerComplete() {
       )}
 
       <div className="grid gap-4">
-        {playlists?.map((playlist) => (
+        {(Array.isArray(playlists) ? playlists : [])?.map((playlist) => (
           <Card key={playlist.id}>
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">

@@ -166,7 +166,7 @@ export function SceneEditorComplete() {
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-4">
           <h3 className="font-semibold">Scenes</h3>
-          {scenes?.map((scene) => (
+          {(Array.isArray(scenes) ? scenes : [])?.map((scene) => (
             <Card
               key={scene.id}
               className={`cursor-pointer transition ${selectedScene?.id === scene.id ? "ring-2 ring-purple-500" : ""}`}

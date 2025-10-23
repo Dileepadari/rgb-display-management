@@ -1,90 +1,122 @@
-import mqtt, { type MqttClient } from "mqtt"
+import mqtt from "mqtt"
 
-let client: MqttClient | null = null
+interface ThingSpeakMQTTConfig {
+  channelId: string
+  clientId: string
+  username: string
+  password: string
+}
+
+let mqttClient: mqtt.MqttClient | null = null
 
 export async function initMQTT() {
-  if (client) return client
+  if (mqttClient) return mqttClient
 
   try {
-    const brokerUrl = process.env.NEXT_PUBLIC_MQTT_BROKER || "mqtt://localhost"
-    const port = process.env.NEXT_PUBLIC_MQTT_PORT || "1883"
+    // ThingSpeak WebSocket configuration
+    const broker = "wss://mqtt3.thingspeak.com"
+    const port = "443" // WebSocket port
+    const channelId = process.env.NEXT_PUBLIC_THINGSPEAK_CHANNEL_ID
+    const apiKey = process.env.THINGSPEAK_API_KEY
 
-    client = mqtt.connect(`${brokerUrl}:${port}`, {
-      clientId: `web-client-${Date.now()}`,
-      reconnectPeriod: 1000,
-      connectTimeout: 30 * 1000,
+    if (!channelId || !apiKey) {
+      throw new Error("ThingSpeak configuration missing")
+    }
+
+    const config: ThingSpeakMQTTConfig = {
+      channelId,
+      clientId: `nextjs_client_${Math.random().toString(16).substring(2, 10)}`,
+      username: apiKey,
+      password: apiKey,
+    }
+
+    const mqttUrl = `${broker}/mqtt`
+
+    mqttClient = mqtt.connect(mqttUrl, {
+      clientId: config.clientId,
+      username: config.username,
+      password: config.password,
+      clean: true,
+      reconnectPeriod: 10000,
+      connectTimeout: 30000,
+      keepalive: 60,
+      protocol: 'wss',
+      rejectUnauthorized: false
     })
 
-    client.on("connect", () => {
-      console.log("[MQTT] Connected to broker")
-      client?.subscribe("devices/+/status", (err) => {
-        if (err) console.error("[MQTT] Subscribe error:", err)
+    mqttClient.on("connect", () => {
+      console.log("[ThingSpeak MQTT] Connected successfully")
+      // Subscribe to ThingSpeak channel updates
+      const topic = `channels/${config.channelId}/subscribe`
+      mqttClient?.subscribe(topic, (err) => {
+        if (err) {
+          console.error("[ThingSpeak MQTT] Subscribe error:", err)
+        } else {
+          console.log("[ThingSpeak MQTT] Subscribed to:", topic)
+        }
       })
     })
 
-    client.on("message", (topic, message) => {
-      console.log(`[MQTT] Message on ${topic}:`, message.toString())
-      // Handle incoming messages
-      const event = new CustomEvent("mqtt-message", {
-        detail: { topic, message: message.toString() },
-      })
-      window.dispatchEvent(event)
+    mqttClient.on("message", (topic, message) => {
+      try {
+        const data = JSON.parse(message.toString())
+        console.log("[ThingSpeak MQTT] Received update:", data)
+        // Dispatch event for components to listen to
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("thingspeak-update", {
+              detail: data,
+            })
+          )
+        }
+      } catch (error) {
+        console.error("[ThingSpeak MQTT] Message parse error:", error)
+      }
     })
 
-    client.on("error", (err) => {
-      console.error("[MQTT] Error:", err)
+    mqttClient.on("error", (err) => {
+      console.error("[ThingSpeak MQTT] Error:", err)
     })
 
-    client.on("disconnect", () => {
-      console.log("[MQTT] Disconnected")
+    mqttClient.on("close", () => {
+      console.log("[ThingSpeak MQTT] Connection closed")
     })
 
-    return client
+    return mqttClient
   } catch (error) {
-    console.error("[MQTT] Connection failed:", error)
+    console.error("[ThingSpeak MQTT] Setup failed:", error)
     return null
   }
 }
 
-export function publishMessage(topic: string, message: string) {
-  if (!client) {
-    console.error("[MQTT] Client not initialized")
-    return
+export function publishToThingSpeak(fieldValues: Record<string, number | string>) {
+  if (!mqttClient?.connected) {
+    console.error("[ThingSpeak MQTT] Not connected")
+    return false
   }
 
-  client.publish(topic, message, (err) => {
-    if (err) console.error("[MQTT] Publish error:", err)
-    else console.log(`[MQTT] Published to ${topic}`)
-  })
-}
-
-export function subscribeTopic(topic: string) {
-  if (!client) {
-    console.error("[MQTT] Client not initialized")
-    return
+  const channelId = process.env.NEXT_PUBLIC_THINGSPEAK_CHANNEL_ID
+  if (!channelId) {
+    console.error("[ThingSpeak MQTT] Channel ID not configured")
+    return false
   }
 
-  client.subscribe(topic, (err) => {
-    if (err) console.error("[MQTT] Subscribe error:", err)
-    else console.log(`[MQTT] Subscribed to ${topic}`)
-  })
-}
-
-export function unsubscribeTopic(topic: string) {
-  if (!client) {
-    console.error("[MQTT] Client not initialized")
-    return
+  try {
+    const topic = `channels/${channelId}/publish`
+    mqttClient.publish(topic, JSON.stringify(fieldValues))
+    console.log("[ThingSpeak MQTT] Published:", fieldValues)
+    return true
+  } catch (error) {
+    console.error("[ThingSpeak MQTT] Publish failed:", error)
+    return false
   }
-
-  client.unsubscribe(topic, (err) => {
-    if (err) console.error("[MQTT] Unsubscribe error:", err)
-    else console.log(`[MQTT] Unsubscribed from ${topic}`)
-  })
 }
 
 export function closeMQTT() {
-  if (client) {
-    client.end()
-    client = null
+  if (mqttClient?.connected) {
+    mqttClient.end(false, () => {
+      console.log("[ThingSpeak MQTT] Disconnected")
+      mqttClient = null
+    })
   }
 }

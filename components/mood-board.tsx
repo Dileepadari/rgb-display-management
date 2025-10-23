@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Trash2, Edit2, Send, History, Wifi, WifiOff, AlertCircle, CheckCircle } from "lucide-react"
@@ -30,77 +30,12 @@ interface StatusHistory {
   deviceId: string
   moodId: string
   timestamp: string
-  status: "success" | "failed"
+  status: "success" | "failed" | "pending"
 }
 
 export default function MoodBoard() {
-  const [moods, setMoods] = useState<Mood[]>([
-    {
-      id: "1",
-      name: "Focus",
-      color: "#6366F1",
-      icon: "🎯",
-      animation: "pulse",
-      description: "Deep focus mode - calm and concentrated",
-      brightness: 80,
-      saturation: 60,
-    },
-    {
-      id: "2",
-      name: "Creative",
-      color: "#EC4899",
-      icon: "🎨",
-      animation: "bounce",
-      description: "Creative mode - energetic and inspiring",
-      brightness: 100,
-      saturation: 100,
-    },
-    {
-      id: "3",
-      name: "Relaxed",
-      color: "#10B981",
-      icon: "🌿",
-      animation: "fade",
-      description: "Relaxed mode - calm and peaceful",
-      brightness: 50,
-      saturation: 40,
-    },
-    {
-      id: "4",
-      name: "Energetic",
-      color: "#F59E0B",
-      icon: "⚡",
-      animation: "spin",
-      description: "High energy mode - vibrant and dynamic",
-      brightness: 100,
-      saturation: 100,
-    },
-  ])
-
-  const [deviceStatuses, setDeviceStatuses] = useState<DeviceStatus[]>([
-    {
-      deviceId: "1",
-      deviceName: "Office Display",
-      currentMood: "1",
-      status: "online",
-      lastUpdated: "2 mins ago",
-      appliedAt: "10:30 AM",
-    },
-    {
-      deviceId: "2",
-      deviceName: "Lobby Panel",
-      currentMood: "3",
-      status: "online",
-      lastUpdated: "5 mins ago",
-      appliedAt: "10:15 AM",
-    },
-    {
-      deviceId: "3",
-      deviceName: "Meeting Room",
-      status: "offline",
-      lastUpdated: "1 hour ago",
-    },
-  ])
+  const [moods, setMoods] = useState<Mood[]>([])
+  const [deviceStatuses, setDeviceStatuses] = useState<DeviceStatus[]>([])
 
   const [statusHistory, setStatusHistory] = useState<StatusHistory[]>([
     { id: "1", deviceId: "1", moodId: "1", timestamp: "10:30 AM", status: "success" },
@@ -122,57 +57,81 @@ export default function MoodBoard() {
   })
 
   const addMood = () => {
-    if (newMood.name) {
-      setMoods([
-        ...moods,
-        {
-          id: `mood-${Date.now()}`,
-          ...newMood,
-        },
-      ])
-      setNewMood({
-        name: "",
-        color: "#6366F1",
-        icon: "😊",
-        animation: "pulse",
-        description: "",
-        brightness: 80,
-        saturation: 60,
-      })
-      setShowAddForm(false)
+    // create mood via API
+    if (!newMood.name) return
+    ;(async () => {
+      try {
+        const res = await fetch('/api/moods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMood) })
+        if (!res.ok) throw new Error(await res.text())
+        const created = await res.json()
+        setMoods((m) => [created, ...m])
+        setNewMood({ name: '', color: '#6366F1', icon: '😊', animation: 'pulse', description: '', brightness: 80, saturation: 60 })
+        setShowAddForm(false)
+      } catch (err) {
+        console.error('Failed to add mood', err)
+      }
+    })()
+  }
+
+  const deleteMood = async (id: string) => {
+    if (!confirm('Delete mood?')) return
+    try {
+      const res = await fetch(`/api/moods/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(await res.text())
+      setMoods((m) => m.filter((x) => x.id !== id))
+    } catch (err) {
+      console.error('Failed to delete mood', err)
     }
   }
 
-  const deleteMood = (id: string) => {
-    setMoods(moods.filter((m) => m.id !== id))
+  const applyMoodToDevice = async (moodId: string, deviceId: string) => {
+    // optimistic update
+    setDeviceStatuses((prev) => prev.map((ds) => (ds.deviceId === deviceId ? { ...ds, currentMood: moodId, lastUpdated: 'now', appliedAt: new Date().toLocaleTimeString() } : ds)))
+    setStatusHistory((prev) => [{ id: `hist-${Date.now()}`, deviceId, moodId, timestamp: new Date().toLocaleTimeString(), status: 'pending' }, ...prev])
+
+    try {
+      // record mapping
+      const rec = await fetch('/api/device-moods', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: deviceId, mood_id: moodId }) })
+      if (!rec.ok) throw new Error(await rec.text())
+
+      // publish mqtt command
+      const pub = await fetch('/api/mqtt/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId, command: { type: 'apply_mood', moodId } }) })
+      if (!pub.ok) throw new Error(await pub.text())
+
+      setStatusHistory((prev) => [{ id: `hist-${Date.now()}`, deviceId, moodId, timestamp: new Date().toLocaleTimeString(), status: 'success' }, ...prev.filter((h) => h.status !== 'pending')])
+    } catch (err) {
+      console.error('Failed to apply mood', err)
+      setStatusHistory((prev) => [{ id: `hist-${Date.now()}`, deviceId, moodId, timestamp: new Date().toLocaleTimeString(), status: 'failed' }, ...prev.filter((h) => h.status !== 'pending')])
+    }
   }
 
-  const applyMoodToDevice = (moodId: string, deviceId: string) => {
-    setDeviceStatuses(
-      deviceStatuses.map((ds) =>
-        ds.deviceId === deviceId
-          ? {
-              ...ds,
-              currentMood: moodId,
-              lastUpdated: "now",
-              appliedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            }
-          : ds,
-      ),
-    )
+  // load initial data
+  useEffect(() => {
+    let mounted = true
+    fetch('/api/moods')
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: Mood[]) => mounted && setMoods(data))
+      .catch((err) => console.error('Failed to load moods', err))
 
-    // Add to history
-    setStatusHistory([
-      {
-        id: `hist-${Date.now()}`,
-        deviceId,
-        moodId,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        status: "success",
-      },
-      ...statusHistory,
-    ])
-  }
+    fetch('/api/devices')
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((devices) => {
+        if (!mounted) return
+        const statuses = devices.map((d: any) => ({ deviceId: d.id, deviceName: d.name, currentMood: undefined, status: d.is_online ? 'online' : 'offline', lastUpdated: d.last_sync || 'never' }))
+        setDeviceStatuses(statuses)
+      })
+      .catch((err) => console.error('Failed to load devices', err))
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const applyMoodToAllDevices = (moodId: string) => {
     const onlineDevices = deviceStatuses.filter((ds) => ds.status === "online")
