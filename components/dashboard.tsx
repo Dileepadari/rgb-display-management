@@ -28,12 +28,15 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export default function Dashboard() {
   const { data: devices = [] } = useSWR<Device[]>("/api/devices", fetcher)
+  // Ensure we always work with an array. Some API responses (or errors) may return
+  // an object or null which would make `.filter`/`.map` crash at runtime.
+  const devicesList: Device[] = Array.isArray(devices) ? devices : []
   const { data: scenes = [] } = useSWR<Scene[]>("/api/scenes", fetcher)
   const { data: playlists = [] } = useSWR<Playlist[]>("/api/playlists", fetcher)
 
-  const activeDevices = devices.filter((d) => d.is_online).length
+  const activeDevices = devicesList.filter((d) => d.is_online).length
   const stats = {
-    totalDevices: devices.length,
+    totalDevices: devicesList.length,
     activeDevices,
     totalScenes: scenes.length,
     totalPlaylists: playlists.length,
@@ -93,12 +96,12 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="divide-y divide-border/50">
-          {devices.length === 0 ? (
+          {devicesList.length === 0 ? (
             <div className="p-6 text-center text-muted-foreground">
               <p>No devices connected yet. Add a device to get started.</p>
             </div>
           ) : (
-            devices.map((device) => (
+            devicesList.map((device) => (
               <div
                 key={device.id}
                 className="p-6 flex items-center justify-between hover:bg-primary/5 transition-colors"

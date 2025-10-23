@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Trash2, Wifi, WifiOff, Zap, Thermometer, Activity, Settings } from "lucide-react"
@@ -27,50 +27,7 @@ interface DeviceGroup {
 }
 
 export default function DeviceManager() {
-  const [devices, setDevices] = useState<Device[]>([
-    {
-      id: "1",
-      name: "Office Display",
-      status: "online",
-      brightness: 85,
-      thingspeak_channel: "CH123456",
-      firmware_version: "1.2.3",
-      last_sync: "2 mins ago",
-      group: "office",
-      temperature: 42,
-      power_consumption: 45,
-      uptime: "15d 3h",
-      signal_strength: 85,
-    },
-    {
-      id: "2",
-      name: "Lobby Panel",
-      status: "online",
-      brightness: 100,
-      thingspeak_channel: "CH123457",
-      firmware_version: "1.2.3",
-      last_sync: "5 mins ago",
-      group: "lobby",
-      temperature: 38,
-      power_consumption: 52,
-      uptime: "20d 1h",
-      signal_strength: 92,
-    },
-    {
-      id: "3",
-      name: "Meeting Room",
-      status: "offline",
-      brightness: 0,
-      thingspeak_channel: "CH123458",
-      firmware_version: "1.1.0",
-      last_sync: "1 hour ago",
-      group: "meeting",
-      temperature: 0,
-      power_consumption: 0,
-      uptime: "0d 0h",
-      signal_strength: 0,
-    },
-  ])
+  const [devices, setDevices] = useState<Device[]>([])
 
   const [groups, setGroups] = useState<DeviceGroup[]>([
     { id: "office", name: "Office", devices: ["1"] },
@@ -85,27 +42,39 @@ export default function DeviceManager() {
   const [newDevice, setNewDevice] = useState({ name: "", thingspeak_channel: "", group: "" })
   const [newGroup, setNewGroup] = useState("")
 
-  const addDevice = () => {
+  useEffect(() => {
+    let mounted = true
+    fetch('/api/devices')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        return res.json()
+      })
+      .then((data: Device[]) => {
+        if (mounted) setDevices(data)
+      })
+      .catch((err) => console.error('Failed to load devices', err))
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const addDevice = async () => {
     if (newDevice.name && newDevice.thingspeak_channel) {
-      setDevices([
-        ...devices,
-        {
-          id: `device-${Date.now()}`,
-          name: newDevice.name,
-          status: "offline",
-          brightness: 0,
-          thingspeak_channel: newDevice.thingspeak_channel,
-          firmware_version: "1.0.0",
-          last_sync: "Never",
-          group: newDevice.group || undefined,
-          temperature: 0,
-          power_consumption: 0,
-          uptime: "0d 0h",
-          signal_strength: 0,
-        },
-      ])
-      setNewDevice({ name: "", thingspeak_channel: "", group: "" })
-      setShowAddForm(false)
+      try {
+        const res = await fetch('/api/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newDevice.name, thingspeak_channel: newDevice.thingspeak_channel, group: newDevice.group }),
+        })
+        if (!res.ok) throw new Error(await res.text())
+        const created = await res.json()
+        setDevices((prev) => [created, ...prev])
+        setNewDevice({ name: '', thingspeak_channel: '', group: '' })
+        setShowAddForm(false)
+      } catch (err) {
+        console.error('Failed to create device', err)
+      }
     }
   }
 
@@ -117,8 +86,15 @@ export default function DeviceManager() {
     }
   }
 
-  const deleteDevice = (id: string) => {
-    setDevices(devices.filter((d) => d.id !== id))
+  const deleteDevice = async (id: string) => {
+    if (!confirm('Delete device?')) return
+    try {
+      const res = await fetch(`/api/devices/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(await res.text())
+      setDevices((prev) => prev.filter((d) => d.id !== id))
+    } catch (err) {
+      console.error('Failed to delete device', err)
+    }
   }
 
   const deleteGroup = (id: string) => {
@@ -126,22 +102,31 @@ export default function DeviceManager() {
     setDevices(devices.map((d) => (d.group === id ? { ...d, group: undefined } : d)))
   }
 
-  const updateBrightness = (id: string, brightness: number) => {
-    setDevices(devices.map((d) => (d.id === id ? { ...d, brightness } : d)))
+  const updateBrightness = async (id: string, brightness: number) => {
+    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, brightness } : d)))
+    try {
+      await fetch(`/api/devices/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ brightness }),
+      })
+    } catch (err) {
+      console.error('Failed to update brightness', err)
+    }
   }
 
-  const toggleDeviceStatus = (id: string) => {
-    setDevices(
-      devices.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              status: d.status === "online" ? "offline" : "online",
-              last_sync: new Date().toLocaleTimeString(),
-            }
-          : d,
-      ),
-    )
+  const toggleDeviceStatus = async (id: string) => {
+    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, status: d.status === 'online' ? 'offline' : 'online', last_sync: new Date().toLocaleTimeString() } : d)))
+    try {
+      // publish to MQTT to notify device
+      await fetch('/api/mqtt/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deviceId: id, command: { type: 'set_status', status: 'toggle' } }),
+      })
+    } catch (err) {
+      console.error('Failed to publish MQTT command', err)
+    }
   }
 
   const filteredDevices = selectedGroup ? devices.filter((d) => d.group === selectedGroup) : devices

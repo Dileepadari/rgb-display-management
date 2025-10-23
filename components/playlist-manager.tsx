@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Trash2, Play, Clock, Repeat2, ChevronDown, ChevronUp } from "lucide-react"
@@ -32,89 +32,69 @@ interface Playlist {
 }
 
 export default function PlaylistManager() {
-  const [playlists, setPlaylists] = useState<Playlist[]>([
-    {
-      id: "1",
-      name: "Morning Display",
-      is_active: true,
-      items: [
-        { id: "1", scene_id: "scene-1", duration: 10, transition: "fade" },
-        { id: "2", scene_id: "scene-2", duration: 15, transition: "scroll" },
-      ],
-      schedules: [
-        {
-          id: "sch-1",
-          type: "daily",
-          startTime: "08:00",
-          endTime: "12:00",
-          devices: ["1", "2"],
-        },
-      ],
-      loop: true,
-      randomOrder: false,
-    },
-    {
-      id: "2",
-      name: "Evening Display",
-      is_active: false,
-      items: [{ id: "3", scene_id: "scene-3", duration: 20, transition: "fade" }],
-      schedules: [
-        {
-          id: "sch-2",
-          type: "daily",
-          startTime: "17:00",
-          endTime: "21:00",
-          devices: ["1"],
-        },
-      ],
-      loop: true,
-      randomOrder: false,
-    },
-  ])
+  const [playlists, setPlaylists] = useState<Playlist[]>([])
 
   const [showAddForm, setShowAddForm] = useState(false)
   const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null)
   const [editingSchedule, setEditingSchedule] = useState<string | null>(null)
   const [newPlaylist, setNewPlaylist] = useState({ name: "" })
-  const [newSchedule, setNewSchedule] = useState({
-    type: "daily" as const,
-    startTime: "09:00",
-    endTime: "17:00",
-    devices: [] as string[],
+  const [newSchedule, setNewSchedule] = useState<{ type: "once" | "daily" | "weekly"; startTime: string; endTime?: string; devices: string[] }>({
+    type: 'daily',
+    startTime: '09:00',
+    endTime: '17:00',
+    devices: [],
   })
 
   const devices = ["1", "2", "3"] // Mock devices
 
-  const addPlaylist = () => {
-    if (newPlaylist.name) {
-      setPlaylists([
-        ...playlists,
-        {
-          id: `playlist-${Date.now()}`,
-          name: newPlaylist.name,
-          is_active: false,
-          items: [],
-          schedules: [],
-          loop: true,
-          randomOrder: false,
-        },
-      ])
-      setNewPlaylist({ name: "" })
+  useEffect(() => {
+    let mounted = true
+    fetch('/api/playlists')
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await r.text())
+        return r.json()
+      })
+      .then((data: Playlist[]) => mounted && setPlaylists(data))
+      .catch((err) => console.error('Failed to load playlists', err))
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const addPlaylist = async () => {
+    if (!newPlaylist.name) return
+    try {
+      const res = await fetch('/api/playlists', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newPlaylist.name }) })
+      if (!res.ok) throw new Error(await res.text())
+      const created = await res.json()
+      setPlaylists((p) => [created, ...p])
+      setNewPlaylist({ name: '' })
       setShowAddForm(false)
+    } catch (err) {
+      console.error('Failed to create playlist', err)
     }
   }
 
-  const deletePlaylist = (id: string) => {
-    setPlaylists(playlists.filter((p) => p.id !== id))
+  const deletePlaylist = async (id: string) => {
+    if (!confirm('Delete playlist?')) return
+    try {
+      const res = await fetch(`/api/playlists/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error(await res.text())
+      setPlaylists((p) => p.filter((pl) => pl.id !== id))
+    } catch (err) {
+      console.error('Failed to delete playlist', err)
+    }
   }
 
-  const toggleActive = (id: string) => {
-    setPlaylists(
-      playlists.map((p) => ({
-        ...p,
-        is_active: p.id === id ? !p.is_active : false,
-      })),
-    )
+  const toggleActive = async (id: string) => {
+    // naive toggle: set active flag server-side
+    try {
+      const updated = playlists.map((p) => (p.id === id ? { ...p, is_active: !p.is_active } : { ...p, is_active: false }))
+      setPlaylists(updated)
+      await fetch(`/api/playlists/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: updated.find((x) => x.id === id)?.is_active }) })
+    } catch (err) {
+      console.error('Failed to toggle active', err)
+    }
   }
 
   const toggleLoop = (id: string) => {
