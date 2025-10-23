@@ -18,56 +18,97 @@ export default function SceneManager() {
   const [panelRows, setPanelRows] = useState(2)
 
   useEffect(() => {
-    // Load scenes
-    const allScenes = sceneConfigManager.getAllScenes()
-    setScenes(allScenes)
+    // Load scenes from backend
+    let mounted = true
+    fetch('/api/scenes')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        return res.json()
+      })
+      .then((data) => {
+        if (mounted) setScenes(data)
+      })
+      .catch((err) => console.error('Failed to load scenes', err))
 
-    // Listen for changes
+    // Keep local manager in sync if used elsewhere
     sceneConfigManager.onSceneChange((scene, action) => {
-      if (action === "create" || action === "update") {
-        setScenes(sceneConfigManager.getAllScenes())
-      } else if (action === "delete") {
-        setScenes(sceneConfigManager.getAllScenes())
-      }
+      fetch('/api/scenes')
+        .then((r) => r.json())
+        .then((d) => setScenes(d))
+        .catch(() => {})
     })
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const handleCreateScene = () => {
     if (newSceneName.trim()) {
-      const scene = sceneConfigManager.createScene(newSceneName, panelCols, panelRows)
-      if (newSceneDescription) {
-        sceneConfigManager.updateScene(scene.id, { description: newSceneDescription })
-      }
-      setNewSceneName("")
-      setNewSceneDescription("")
-      setShowCreateForm(false)
-      setScenes(sceneConfigManager.getAllScenes())
+      fetch('/api/scenes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newSceneName, description: newSceneDescription, panel_width: panelCols, panel_height: panelRows }),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(await res.text())
+          return res.json()
+        })
+        .then((created) => {
+          setScenes((prev) => [created, ...prev])
+          setNewSceneName('')
+          setNewSceneDescription('')
+          setShowCreateForm(false)
+        })
+        .catch((err) => console.error('Failed to create scene', err))
     }
   }
 
   const handleDeleteScene = (sceneId: string) => {
-    if (confirm("Are you sure you want to delete this scene?")) {
-      sceneConfigManager.deleteScene(sceneId)
-      setScenes(sceneConfigManager.getAllScenes())
-    }
+    if (!confirm('Are you sure you want to delete this scene?')) return
+    fetch(`/api/scenes/${sceneId}`, { method: 'DELETE' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        setScenes((prev) => prev.filter((s) => s.id !== sceneId))
+      })
+      .catch((err) => console.error('Failed to delete scene', err))
   }
 
   const handleDuplicateScene = (sceneId: string) => {
-    sceneConfigManager.duplicateScene(sceneId)
-    setScenes(sceneConfigManager.getAllScenes())
+    // Fetch the scene and re-post as a new one
+    fetch(`/api/scenes/${sceneId}`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        return res.json()
+      })
+      .then((scene) => {
+        const duplicate = { ...scene, name: `${scene.name} (Copy)` }
+        delete duplicate.id
+        fetch('/api/scenes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(duplicate),
+        })
+          .then((r) => r.json())
+          .then((created) => setScenes((prev) => [created, ...prev]))
+      })
+      .catch((err) => console.error('Failed to duplicate scene', err))
   }
 
   const handleExportScene = (scene: SceneConfig) => {
-    const json = sceneConfigManager.exportScene(scene.id)
-    if (json) {
-      const blob = new Blob([json], { type: "application/json" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${scene.name}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-    }
+    // Simply export the scene JSON
+    fetch(`/api/scenes/${scene.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${scene.name}.json`
+        a.click()
+        URL.revokeObjectURL(url)
+      })
+      .catch((err) => console.error('Failed to export scene', err))
   }
 
   const handleImportScene = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,8 +117,20 @@ export default function SceneManager() {
       const reader = new FileReader()
       reader.onload = (event) => {
         const json = event.target?.result as string
-        sceneConfigManager.importScene(json)
-        setScenes(sceneConfigManager.getAllScenes())
+        try {
+          const parsed = JSON.parse(json)
+          // POST to backend
+          fetch('/api/scenes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsed),
+          })
+            .then((r) => r.json())
+            .then((created) => setScenes((prev) => [created, ...prev]))
+            .catch((err) => console.error('Import failed', err))
+        } catch (err) {
+          console.error('Invalid JSON', err)
+        }
       }
       reader.readAsText(file)
     }

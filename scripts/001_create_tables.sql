@@ -192,21 +192,30 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
 
--- Create default moods
-INSERT INTO public.moods (user_id, name, description, color, icon, animation, is_custom)
-SELECT 
-  auth.uid(),
-  name,
-  description,
-  color,
-  icon,
-  animation,
-  FALSE
-FROM (
-  VALUES
-    ('Focus', 'Deep concentration mode', '#3B82F6', 'focus', 'pulse', FALSE),
-    ('Creative', 'Creative inspiration mode', '#EC4899', 'sparkles', 'bounce', FALSE),
-    ('Relaxed', 'Calm and peaceful mode', '#10B981', 'leaf', 'fade', FALSE),
-    ('Energetic', 'High energy mode', '#F59E0B', 'zap', 'flash', FALSE)
-) AS t(name, description, color, icon, animation)
-WHERE NOT EXISTS (SELECT 1 FROM public.moods WHERE user_id = auth.uid());
+-- Create a trigger function to insert default moods for a newly created user
+CREATE OR REPLACE FUNCTION public.insert_default_moods_for_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.moods (user_id, name, description, color, icon, animation, is_custom)
+  SELECT NEW.id, name, description, color, icon, animation, FALSE
+  FROM (
+    VALUES
+      ('Focus', 'Deep concentration mode', '#3B82F6', 'focus', 'pulse'),
+      ('Creative', 'Creative inspiration mode', '#EC4899', 'sparkles', 'bounce'),
+      ('Relaxed', 'Calm and peaceful mode', '#10B981', 'leaf', 'fade'),
+      ('Energetic', 'High energy mode', '#F59E0B', 'zap', 'flash')
+  ) AS t(name, description, color, icon, animation)
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.moods m WHERE m.user_id = NEW.id AND m.name = t.name
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Attach the trigger function to auth.users so every new user gets the default moods
+DROP TRIGGER IF EXISTS on_auth_user_created_default_moods ON auth.users;
+CREATE TRIGGER on_auth_user_created_default_moods
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.insert_default_moods_for_new_user();

@@ -14,6 +14,7 @@ interface DeviceConfigPanelProps {
 
 export default function DeviceConfigPanel({ device, onSave, onClose }: DeviceConfigPanelProps) {
   const [config, setConfig] = useState<DeviceConfig>(device)
+  const [saving, setSaving] = useState(false)
 
   const handleChange = (key: keyof DeviceConfig, value: unknown) => {
     setConfig({ ...config, [key]: value })
@@ -30,8 +31,31 @@ export default function DeviceConfigPanel({ device, onSave, onClose }: DeviceCon
   }
 
   const handleSave = () => {
-    onSave(config)
-    onClose()
+    setSaving(true)
+    // Persist to backend
+    fetch('/api/device-configs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        device_id: config.deviceId,
+        config_key: 'default',
+        config_value: config,
+      }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(await res.text())
+        const data = await res.json()
+        onSave({ ...config })
+      })
+      .catch((err) => {
+        console.error('Failed to save config', err)
+        // still call onSave locally
+        onSave({ ...config })
+      })
+      .finally(() => {
+        setSaving(false)
+        onClose()
+      })
   }
 
   return (
@@ -187,10 +211,11 @@ export default function DeviceConfigPanel({ device, onSave, onClose }: DeviceCon
           <div className="flex gap-2 pt-4 border-t border-border/50">
             <Button
               onClick={handleSave}
+              disabled={saving}
               className="flex-1 gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
             >
               <Save className="w-4 h-4" />
-              Save Configuration
+              {saving ? 'Saving...' : 'Save Configuration'}
             </Button>
             <Button
               onClick={onClose}
