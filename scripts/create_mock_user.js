@@ -19,8 +19,12 @@
     process.exit(1);
   }
 
-  const targetEmail = 'adaridileep@gmail.com';
-  const password = process.env.MOCK_USER_PASSWORD || 'REDACTED';
+  const targetEmail = process.env.MOCK_USER_EMAIL;
+  const password = process.env.MOCK_USER_PASSWORD;
+  if (!targetEmail || !password) {
+    console.error('Set MOCK_USER_EMAIL and MOCK_USER_PASSWORD in .env before running this script.');
+    process.exit(1);
+  }
 
   const url = `${SUPABASE_URL.replace(/\/+$/, '')}/auth/v1/admin/users`;
 

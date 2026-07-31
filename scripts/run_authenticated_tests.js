@@ -66,8 +66,12 @@ async function signIn(email, password) {
 }
 
 async function run() {
-  const email = process.env.SUPABASE_TEST_EMAIL || 'adaridileep@gmail.com'
-  const password = process.env.SUPABASE_TEST_PASSWORD || 'REDACTED'
+  const email = process.env.SUPABASE_TEST_EMAIL
+  const password = process.env.SUPABASE_TEST_PASSWORD
+  if (!email || !password) {
+    console.error('Set SUPABASE_TEST_EMAIL and SUPABASE_TEST_PASSWORD env vars before running this script.')
+    process.exit(1)
+  }
 
   console.log('Signing in...')
   console.log('SUPABASE_URL:', SUPABASE_URL)
