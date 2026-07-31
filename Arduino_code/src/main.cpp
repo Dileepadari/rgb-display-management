@@ -5,18 +5,17 @@
 #include <ArduinoJson.h>
 #include <SPIFFS.h>
 #include "GPxMatrix.h"
+#include "secrets.h"
 
 // ---------- WiFi ----------
-// const char* ssid = "charan's galaxy";
-// const char* password = "REDACTED";
-const char* ssid = "wifi@iiith";
-const char* username = "REDACTED"; // your IIITH ID
-const char* password = "Your pASS"; // your password
+const char* ssid = WIFI_SSID;
+const char* username = WIFI_USERNAME; // your IIITH ID
+const char* password = WIFI_PASSWORD;
 
 // ---------- ThingSpeak ----------
-const char* readAPIKey  = "REDACTED";
-const char* writeAPIKey = "REDACTED";
-const char* channelID   = "3128483";
+const char* readAPIKey  = THINGSPEAK_READ_API_KEY;
+const char* writeAPIKey = THINGSPEAK_WRITE_API_KEY;
+const char* channelID   = THINGSPEAK_CHANNEL_ID;
 
 // ---------- Matrix ----------
 #define P_A    32
