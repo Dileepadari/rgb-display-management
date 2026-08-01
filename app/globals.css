@@ -365,3 +365,94 @@
   box-shadow: var(--shadow-overlay);
   border-color: color-mix(in oklch, var(--primary) 45%, var(--border));
 }
+
+/* ── Texture ──────────────────────────────────────────────────────────────
+   A faint noise wash over large surfaces. Flat colour fields at this scale
+   read as synthetic; the grain gives them something to catch the eye. The
+   SVG is inlined so it costs no request. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Horizontal scanlines, for surfaces standing in for the LED panel itself. */
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    color-mix(in oklch, var(--background) 55%, transparent) 2px 3px
+  );
+}
+
+/* ── Motion ───────────────────────────────────────────────────────────────
+   Staggered entrances: set --stagger-index on each child and the delay
+   follows automatically, so a list animates in sequence without per-item
+   inline styles. */
+.stagger > * {
+  animation: slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger-index, 0) * 55ms);
+}
+
+/* Overshoot easing — the difference between "a div moved" and something
+   with a bit of physics to it. */
+.spring {
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.25s ease-out,
+    border-color 0.25s ease-out;
+}
+
+.spring:hover {
+  transform: translateY(-3px) scale(1.012);
+  box-shadow: var(--shadow-overlay);
+  border-color: color-mix(in oklch, var(--primary) 50%, var(--border));
+}
+
+.spring:active {
+  transform: translateY(-1px) scale(0.997);
+}
+
+/* A slow drift for ambient background blobs. */
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(3%, -4%, 0) scale(1.06); }
+  66% { transform: translate3d(-3%, 3%, 0) scale(0.96); }
+}
+
+.animate-drift {
+  animation: drift 18s ease-in-out infinite;
+}
+
+/* A cursor-style blink for "live" indicators. */
+@keyframes soft-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+/* Everything decorative above stops when the OS asks for less motion. This
+   is one blanket rule rather than per-component checks so a new animation
+   can't accidentally opt out of it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

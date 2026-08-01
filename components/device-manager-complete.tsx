@@ -210,12 +210,16 @@ export function DeviceManagerComplete() {
         </Card>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
+      <div className="stagger grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
         {!isLoading && (!devices || devices.length === 0) && (
           <p className="text-muted-foreground text-sm">No devices yet. Add one to get started.</p>
         )}
-        {(Array.isArray(devices) ? devices : []).map((device) => (
-          <Card key={device.id}>
+        {(Array.isArray(devices) ? devices : []).map((device, deviceIndex) => (
+          <Card
+            key={device.id}
+            className="spring"
+            style={{ "--stagger-index": deviceIndex } as React.CSSProperties}
+          >
             <CardContent className="pt-6">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                 <div className="flex-1">

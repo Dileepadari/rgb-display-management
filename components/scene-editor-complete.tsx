@@ -365,27 +365,37 @@ export function SceneEditorComplete() {
       )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[320px_1fr]">
-        <div className="space-y-4">
+        <div className="stagger space-y-4">
           <h3 className="font-semibold">Scenes</h3>
           {Array.isArray(scenes) && scenes.length === 0 && (
             <p className="text-muted-foreground text-sm">No scenes yet. Create one to get started.</p>
           )}
-          {(Array.isArray(scenes) ? scenes : [])?.map((scene) => (
+          {(Array.isArray(scenes) ? scenes : [])?.map((scene, sceneIndex) => (
             <Card
               key={scene.id}
-              className={`cursor-pointer transition ${selectedScene?.id === scene.id ? "ring-2 ring-primary" : ""}`}
+              style={{ "--stagger-index": sceneIndex } as React.CSSProperties}
+              className={`spring cursor-pointer gap-0 overflow-hidden py-0 ${selectedScene?.id === scene.id ? "ring-2 ring-primary" : ""}`}
               onClick={() => setSelectedScene(scene)}
             >
-              <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-semibold">{scene.name}</h4>
-                    <p className="text-muted-foreground text-sm">{scene.description}</p>
-                    <p className="text-muted-foreground mt-1 text-xs">
-                      Panel: {scene.panel_width}x{scene.panel_height} · {scene.elements?.length ?? 0} elements
+              {/* Scenes are visual things — showing the actual composition
+                  beats showing its element count. */}
+              <div className="scanlines relative aspect-video w-full overflow-hidden border-b border-border bg-black">
+                <SceneThumbnail
+                  width={scene.panel_width}
+                  height={scene.panel_height}
+                  elements={normalizeSceneElements(scene.elements ?? [])}
+                />
+              </div>
+              <CardContent className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="truncate font-semibold">{scene.name}</h4>
+                    <p className="text-muted-foreground truncate text-sm">{scene.description}</p>
+                    <p className="text-muted-foreground mt-1 font-mono text-xs">
+                      {scene.panel_width}&times;{scene.panel_height} · {scene.elements?.length ?? 0} elements
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2">
                     <Button
                       size="sm"
                       variant="outline"

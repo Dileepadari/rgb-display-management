@@ -187,7 +187,7 @@ const AdminDashboard = ({ onNavigate }: { onNavigate?: (page: string) => void })
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-gradient-brand">Admin Dashboard</h1>
+          <h1 className="font-heading text-4xl font-bold leading-none tracking-tighter text-gradient-brand md:text-5xl">Admin Dashboard</h1>
           <p className="text-muted-foreground max-w-2xl text-sm">
             System-wide overview across every device, scene and user.
           </p>

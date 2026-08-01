@@ -196,7 +196,7 @@ export function PlaylistManagerComplete() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="grid gap-4">
           {!isLoading && (!playlists || playlists.length === 0) && (
             <p className="text-muted-foreground text-sm">No playlists yet. Create one to get started.</p>
