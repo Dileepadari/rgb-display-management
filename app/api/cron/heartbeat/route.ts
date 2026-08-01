@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const supabase = createServiceClient()
   const { data: devices, error } = await supabase
     .from("devices")
-    .select("id, user_id, thingspeak_channel_id, thingspeak_read_key")
+    .select("id, user_id, name, is_online, thingspeak_channel_id, thingspeak_read_key")
     .not("thingspeak_channel_id", "is", null)
     .not("thingspeak_read_key", "is", null)
 
@@ -41,6 +41,17 @@ export async function GET(request: Request) {
           .from("devices")
           .update({ is_online: isOnline, last_sync: createdAt?.toISOString() ?? null })
           .eq("id", device.id)
+
+        // This cron rewrites is_online on every poll, so compare against the
+        // value we just read to log the transition rather than every check.
+        if (isOnline !== device.is_online) {
+          await supabase.from("activity_log").insert({
+            user_id: device.user_id,
+            type: isOnline ? "device_online" : "device_offline",
+            message: `${device.name} went ${isOnline ? "online" : "offline"}`,
+            device_id: device.id,
+          })
+        }
 
         if (field3 && createdAt) {
           const uptimeMatch = field3.match(/up:(\d+)s/)
