@@ -456,3 +456,23 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Brand mark ───────────────────────────────────────────────────────────
+   The ADK DEV glyph is a single-colour shape, so it's used as a mask rather
+   than an image: the element's background shows through the logo silhouette.
+   That way it takes the theme's own accent in both light and dark instead of
+   staying a fixed deep violet that vanishes on a dark ground — and there's no
+   light tile behind it. */
+.brand-mark {
+  background-color: var(--primary);
+  -webkit-mask: url("/logo.png") center / contain no-repeat;
+  mask: url("/logo.png") center / contain no-repeat;
+}
+
+/* On a coloured ground (the sign-in card's gradient) the glyph reads better
+   solid than tinted. */
+.brand-mark-contrast {
+  background-color: var(--foreground);
+  -webkit-mask: url("/logo.png") center / contain no-repeat;
+  mask: url("/logo.png") center / contain no-repeat;
+}

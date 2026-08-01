@@ -53,9 +53,9 @@ const navItems = [
 function BrandMark({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div className={cn("flex items-center gap-2.5 py-4", collapsed ? "justify-center px-2" : "px-4")}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-        <Zap className="h-5 w-5 text-primary-foreground" />
-      </div>
+      {/* Masked, not drawn — see .brand-mark in globals.css. Takes the theme
+          accent so it works on both grounds. */}
+      <div className="brand-mark h-9 w-9 shrink-0" role="img" aria-label="ADK DEV" />
       {!collapsed && (
         <span className="font-heading text-base font-semibold tracking-tight text-sidebar-foreground">
           RGB Display Manager
@@ -236,9 +236,7 @@ export default function Navigation({ currentPage, setCurrentPage }: NavigationPr
       {/* Mobile top bar */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Zap className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <div className="brand-mark h-8 w-8 shrink-0" role="img" aria-label="ADK DEV" />
           <span className="font-heading text-sm font-semibold">RGB Display Manager</span>
         </div>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>

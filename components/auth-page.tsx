@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/lib/auth-context"
-import { Zap, Mail, Lock, User, AlertCircle, Info } from "lucide-react"
+import { Mail, Lock, User, AlertCircle, Info } from "lucide-react"
 
 export default function AuthPage() {
   const { login, signup } = useAuth()
@@ -47,9 +47,7 @@ export default function AuthPage() {
       <Card className="animate-scale-in glass-card w-full max-w-md">
         <div className="p-8">
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-              <Zap className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <div className="brand-mark-contrast mx-auto mb-4 h-14 w-14" role="img" aria-label="ADK DEV" />
             <h1 className="font-heading mb-2 text-2xl font-bold text-gradient-brand">Smart RGB Display</h1>
             <p className="text-muted-foreground text-sm">Control your LED displays with ease</p>
           </div>

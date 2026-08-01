@@ -13,9 +13,26 @@ const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--fon
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
-  title: "Smart RGB Display Manager",
-  description: "Control and manage RGB LED displays with real-time sync",
-  generator: "v0.app",
+  title: "RGB Display Manager",
+  description:
+    "Design what your LED matrix wall shows from a browser, and let the panel run it on its own.",
+  applicationName: "RGB Display Manager",
+  // Next.js picks up app/icon.png, app/apple-icon.png and app/favicon.ico by
+  // convention; only the social card needs declaring.
+  openGraph: {
+    title: "RGB Display Manager",
+    description:
+      "Design what your LED matrix wall shows from a browser, and let the panel run it on its own.",
+    images: ["/logo-wordmark.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "RGB Display Manager",
+    description:
+      "Design what your LED matrix wall shows from a browser, and let the panel run it on its own.",
+    images: ["/logo-wordmark.png"],
+  },
 }
 
 export default function RootLayout({
