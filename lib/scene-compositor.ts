@@ -5,7 +5,7 @@
 // tickAnimations()/renderScene() exactly — see the comment on each case
 // below for the paired firmware line.
 import type { SceneElement } from "@/lib/scene-schema"
-import { drawIcon } from "@/lib/icons"
+import { drawIcon, ICON_GRID_SIZE } from "@/lib/icons"
 
 export interface AnimRuntime {
   animPhase: number
@@ -100,6 +100,48 @@ export interface RenderCaches {
   weather: Map<string, number | null> // key: "lat,lon"
 }
 
+// Mirrors elements.cpp's scrollOffsetX(). The element enters from the right
+// edge and wraps once it has travelled its own width past the left edge, so
+// every element type scrolls with the same cadence regardless of how its
+// width is derived (measured text, stored image width, icon grid × scale).
+function scrollOffsetX(baseX: number, contentWidth: number, sceneWidth: number, animPhase: number): number {
+  const totalTravel = contentWidth + sceneWidth
+  const offset = animPhase % totalTravel
+  return baseX + sceneWidth - offset
+}
+
+function fontSizeFor(el: SceneElement): number {
+  return el.type === "text" || el.type === "scrollText" || el.type === "clock" || el.type === "weather"
+    ? el.size * 8
+    : 8
+}
+
+// Static footprint of an element at its authored position, used for canvas
+// hit-testing in the editor. Clock/weather are measured from a representative
+// string since their real text changes every tick.
+export function elementBounds(
+  ctx: CanvasRenderingContext2D,
+  el: SceneElement,
+): { x: number; y: number; width: number; height: number } {
+  const fontSize = fontSizeFor(el)
+  ctx.font = `${fontSize}px monospace`
+  const box = (width: number, height: number) => ({ x: el.x, y: el.y, width, height })
+
+  switch (el.type) {
+    case "text":
+    case "scrollText":
+      return box(ctx.measureText(el.text).width, fontSize)
+    case "image":
+      return box(el.width, el.height)
+    case "clock":
+      return box(ctx.measureText(el.format === "HH:mm:ss" ? "00:00:00" : "00:00").width, fontSize)
+    case "weather":
+      return box(ctx.measureText("-99C").width, fontSize)
+    case "icon":
+      return box(ICON_GRID_SIZE * el.scale, ICON_GRID_SIZE * el.scale)
+  }
+}
+
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   sceneWidth: number,
@@ -140,26 +182,31 @@ export function renderScene(
       drawY += Math.round(Math.sin(rt.animPhase * 2 * Math.PI) * 4)
     }
 
-    const fontSize = el.type === "text" || el.type === "scrollText" || el.type === "clock" || el.type === "weather" ? el.size * 8 : 8
+    const fontSize = fontSizeFor(el)
     ctx.textBaseline = "top"
     ctx.font = `${fontSize}px monospace`
 
     switch (el.type) {
       case "text": {
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, ctx.measureText(el.text).width, sceneWidth, rt.animPhase)
+        }
         ctx.fillStyle = color
         ctx.fillText(el.text, drawX, drawY)
         break
       }
       case "scrollText": {
-        const textWidth = ctx.measureText(el.text).width
-        const totalTravel = textWidth + sceneWidth
-        const offset = rt.animPhase % totalTravel
-        const sx = el.x + sceneWidth - offset
+        // scrollText scrolls unconditionally — its motion is the element type
+        // itself, driven by whatever animation keeps animPhase advancing.
+        drawX = scrollOffsetX(drawX, ctx.measureText(el.text).width, sceneWidth, rt.animPhase)
         ctx.fillStyle = color
-        ctx.fillText(el.text, sx, drawY)
+        ctx.fillText(el.text, drawX, drawY)
         break
       }
       case "image": {
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, el.width, sceneWidth, rt.animPhase)
+        }
         const cached = caches.images.get(el.url)
         if (cached) ctx.putImageData(cached, drawX, drawY)
         else if (!caches.images.has(el.url)) {
@@ -174,6 +221,9 @@ export function renderScene(
         const mm = String(now.getMinutes()).padStart(2, "0")
         const ss = String(now.getSeconds()).padStart(2, "0")
         const text = el.format === "HH:mm:ss" ? `${hh}:${mm}:${ss}` : `${hh}:${mm}`
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, ctx.measureText(text).width, sceneWidth, rt.animPhase)
+        }
         ctx.fillStyle = color
         ctx.fillText(text, drawX, drawY)
         break
@@ -186,11 +236,17 @@ export function renderScene(
           fetchWeatherTempC(el.lat, el.lon).then((t) => caches.weather.set(key, t))
         }
         const text = temp == null ? "--" : `${Math.round(temp)}C`
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, ctx.measureText(text).width, sceneWidth, rt.animPhase)
+        }
         ctx.fillStyle = color
         ctx.fillText(text, drawX, drawY)
         break
       }
       case "icon": {
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, ICON_GRID_SIZE * el.scale, sceneWidth, rt.animPhase)
+        }
         drawIcon(ctx, el.id, drawX, drawY, color, el.scale)
         break
       }

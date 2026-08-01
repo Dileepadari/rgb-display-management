@@ -9,6 +9,9 @@ export const ICON_BITMAPS: Record<string, number[]> = {
   square: [0xffff, 0xffff, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xc003, 0xffff, 0xffff],
 }
 
+// Icons are a fixed 16x16 bitmap grid; an icon's drawn size is this × scale.
+export const ICON_GRID_SIZE = 16
+
 export function drawIcon(
   ctx: CanvasRenderingContext2D,
   iconId: string,
@@ -20,9 +23,9 @@ export function drawIcon(
   const rows = ICON_BITMAPS[iconId]
   if (!rows) return
   ctx.fillStyle = color
-  for (let row = 0; row < 16; row++) {
-    for (let col = 0; col < 16; col++) {
-      if (rows[row] & (1 << (15 - col))) {
+  for (let row = 0; row < ICON_GRID_SIZE; row++) {
+    for (let col = 0; col < ICON_GRID_SIZE; col++) {
+      if (rows[row] & (1 << (ICON_GRID_SIZE - 1 - col))) {
         ctx.fillRect(x + col * scale, y + row * scale, scale, scale)
       }
     }

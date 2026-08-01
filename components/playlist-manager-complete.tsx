@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,8 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Trash2, Play, Pause, Send, ArrowUp, ArrowDown } from "lucide-react"
+import { Plus, Trash2, Play, Pause, Send, ArrowUp, ArrowDown, GripVertical } from "lucide-react"
 import useSWR from "swr"
+import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core"
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 import type { PlaylistItem } from "@/lib/playlist-schema"
 
 interface Playlist {
@@ -116,17 +120,24 @@ export function PlaylistManagerComplete() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Playlist Manager</h2>
-          <p className="text-muted-foreground text-sm">Rotate scenes automatically across your displays</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Playlist
-        </Button>
-      </div>
+    <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
+      <PageHeader
+        title="Playlist Manager"
+        purpose="Rotate scenes automatically across your displays, each for a duration you choose."
+        howTo={
+          <ul>
+            <li>Create a playlist, then add scenes to it and set how long each one stays on screen.</li>
+            <li>Drag items by the grip handle to reorder them, or use the arrow buttons.</li>
+            <li>Assign the playlist to a device from the Devices page to start the rotation.</li>
+          </ul>
+        }
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Playlist
+          </Button>
+        }
+      />
 
       {showForm && (
         <Card>
@@ -273,6 +284,67 @@ export function PlaylistManagerComplete() {
   )
 }
 
+function SortablePlaylistItem({
+  index,
+  label,
+  duration,
+  onDurationChange,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+  isFirst,
+  isLast,
+}: {
+  index: number
+  label: string
+  duration: number
+  onDurationChange: (value: number) => void
+  onMoveUp: () => void
+  onMoveDown: () => void
+  onRemove: () => void
+  isFirst: boolean
+  isLast: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      className="flex items-center gap-2 rounded-md border border-border bg-card p-2"
+    >
+      <button
+        type="button"
+        className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        aria-label={`Reorder ${label}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="text-muted-foreground w-5 text-center font-mono text-xs">{index + 1}</span>
+      <span className="flex-1 truncate text-sm">{label}</span>
+      <Input
+        type="number"
+        min={1}
+        value={duration}
+        onChange={(e) => onDurationChange(Number(e.target.value))}
+        className="w-20"
+      />
+      <span className="text-muted-foreground text-xs">sec</span>
+      <Button size="icon-sm" variant="ghost" onClick={onMoveUp} disabled={isFirst} aria-label="Move up">
+        <ArrowUp className="h-4 w-4" />
+      </Button>
+      <Button size="icon-sm" variant="ghost" onClick={onMoveDown} disabled={isLast} aria-label="Move down">
+        <ArrowDown className="h-4 w-4" />
+      </Button>
+      <Button size="icon-sm" variant="ghost" onClick={onRemove} aria-label="Remove from playlist">
+        <Trash2 className="h-4 w-4 text-destructive" />
+      </Button>
+    </div>
+  )
+}
+
 function PlaylistItemsEditor({
   playlist,
   scenes,
@@ -316,6 +388,20 @@ function PlaylistItemsEditor({
       return next
     })
   }
+
+  const reorderItems = (from: number, to: number) => {
+    setItems((prev) => {
+      const next = [...prev]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const handleSave = async () => {
     setSaving(true)
@@ -386,30 +472,34 @@ function PlaylistItemsEditor({
         </div>
 
         <div className="space-y-2">
-          {items.length === 0 && <p className="text-muted-foreground text-sm">No scenes in this playlist yet.</p>}
-          {items.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-md border border-border p-2">
-              <span className="text-muted-foreground w-5 text-center text-xs">{i + 1}</span>
-              <span className="flex-1 truncate text-sm">{sceneName(item.scene_id)}</span>
-              <Input
-                type="number"
-                min={1}
-                value={item.duration_seconds}
-                onChange={(e) => updateDuration(i, Number(e.target.value))}
-                className="w-20"
-              />
-              <span className="text-muted-foreground text-xs">sec</span>
-              <Button size="icon-sm" variant="ghost" onClick={() => moveItem(i, -1)} disabled={i === 0}>
-                <ArrowUp className="h-4 w-4" />
-              </Button>
-              <Button size="icon-sm" variant="ghost" onClick={() => moveItem(i, 1)} disabled={i === items.length - 1}>
-                <ArrowDown className="h-4 w-4" />
-              </Button>
-              <Button size="icon-sm" variant="ghost" onClick={() => removeItem(i)}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
-          ))}
+          {items.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No scenes in this playlist yet.</p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={({ active, over }) => {
+                if (over && active.id !== over.id) reorderItems(Number(active.id), Number(over.id))
+              }}
+            >
+              <SortableContext items={items.map((_, i) => i)} strategy={verticalListSortingStrategy}>
+                {items.map((item, i) => (
+                  <SortablePlaylistItem
+                    key={i}
+                    index={i}
+                    label={sceneName(item.scene_id)}
+                    duration={item.duration_seconds}
+                    onDurationChange={(v) => updateDuration(i, v)}
+                    onMoveUp={() => moveItem(i, -1)}
+                    onMoveDown={() => moveItem(i, 1)}
+                    onRemove={() => removeItem(i)}
+                    isFirst={i === 0}
+                    isLast={i === items.length - 1}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
 
         <div className="flex flex-wrap items-end gap-2 border-t border-border pt-4">

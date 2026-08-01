@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     const { data: device, error: deviceError } = await supabase
       .from("devices")
-      .select("id, current_revision, thingspeak_write_key")
+      .select("id, name, current_revision, thingspeak_write_key")
       .eq("id", deviceId)
       .eq("user_id", user.id)
       .single()
@@ -63,6 +63,20 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if (revisionError) throw revisionError
 
     const pushed = await pushRevision(device.thingspeak_write_key, nextRevision)
+
+    const targetName =
+      parsed.data.target_type === "scene"
+        ? (await supabase.from("scenes").select("name").eq("id", parsed.data.scene_id).single()).data?.name
+        : (await supabase.from("playlists").select("name").eq("id", parsed.data.playlist_id).single()).data?.name
+
+    await supabase.from("activity_log").insert({
+      user_id: user.id,
+      type: "assign",
+      message: `Assigned ${parsed.data.target_type} "${targetName ?? "unknown"}" to ${device.name} (revision ${nextRevision})`,
+      device_id: deviceId,
+      scene_id: assignmentRow.scene_id,
+      playlist_id: assignmentRow.playlist_id,
+    })
 
     return NextResponse.json({
       success: true,

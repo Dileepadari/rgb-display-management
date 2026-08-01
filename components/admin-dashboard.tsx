@@ -187,12 +187,14 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6 md:p-8">
+    <div className="w-full space-y-6 p-4 md:p-8 lg:p-10">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm">System overview and management</p>
+        <div className="space-y-1">
+          <h1 className="font-heading text-3xl font-bold tracking-tight text-gradient-brand">Admin Dashboard</h1>
+          <p className="text-muted-foreground max-w-2xl text-sm">
+            System-wide overview across every device, scene and user.
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="gap-2">
