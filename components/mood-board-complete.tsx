@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -80,17 +81,24 @@ export function MoodBoardComplete() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Mood Board</h2>
-          <p className="text-muted-foreground text-sm">Apply pre-built lighting moods to your devices</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Mood
-        </Button>
-      </div>
+    <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
+      <PageHeader
+        title="Mood Board"
+        purpose="Apply pre-built colour moods to your devices for quick ambient changes without editing a scene."
+        howTo={
+          <ul>
+            <li>Pick a mood from the list to preview its colour palette.</li>
+            <li>Choose a device on the right, then apply the mood to push it immediately.</li>
+            <li>Create a custom mood if you want your own colour set saved for reuse.</li>
+          </ul>
+        }
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Mood
+          </Button>
+        }
+      />
 
       {showForm && (
         <Card>
@@ -149,7 +157,7 @@ export function MoodBoardComplete() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Available Moods</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 2xl:grid-cols-3">
             {(Array.isArray(moods) ? moods : []).map((mood) => (
               <Card key={mood.id} className="cursor-pointer p-4 transition-colors hover:border-primary/40">
                 <div

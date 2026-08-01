@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -110,17 +111,24 @@ export function DeviceManagerComplete() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Device Management</h2>
-          <p className="text-muted-foreground text-sm">Manage your connected LED panels</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Device
-        </Button>
-      </div>
+    <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
+      <PageHeader
+        title="Device Management"
+        purpose="Register and monitor your LED panels, and control which scene or playlist each one is showing."
+        howTo={
+          <ul>
+            <li>Add a device with its panel size and ThingSpeak keys, then flash the firmware with the same keys.</li>
+            <li>A device reports online once its heartbeat arrives; the badge updates automatically.</li>
+            <li>Assign a scene or playlist to push new content — this bumps the revision the device polls for.</li>
+          </ul>
+        }
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Device
+          </Button>
+        }
+      />
 
       {showForm && (
         <Card>
@@ -201,7 +209,7 @@ export function DeviceManagerComplete() {
         </Card>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
         {!isLoading && (!devices || devices.length === 0) && (
           <p className="text-muted-foreground text-sm">No devices yet. Add one to get started.</p>
         )}

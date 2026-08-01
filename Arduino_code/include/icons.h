@@ -60,6 +60,9 @@ static const IconDef ICONS[] = {
 };
 static const size_t ICONS_COUNT = sizeof(ICONS) / sizeof(ICONS[0]);
 
+// Icons are a fixed 16x16 bitmap grid; an icon's drawn size is this x scale.
+static const uint8_t ICON_GRID_SIZE = 16;
+
 inline const uint16_t *findIcon(const char *id) {
   for (size_t i = 0; i < ICONS_COUNT; i++) {
     if (strcmp(ICONS[i].id, id) == 0) return ICONS[i].rows;

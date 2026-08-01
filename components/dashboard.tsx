@@ -52,14 +52,14 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
+    <div className="w-full px-4 py-6 md:px-8 lg:px-10">
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Dashboard</h2>
         <p className="text-muted-foreground text-sm">Monitor and manage your RGB displays</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-4">
         {statCards.map((stat, i) => {
           const Icon = stat.icon
           return (

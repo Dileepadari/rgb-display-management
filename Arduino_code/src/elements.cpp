@@ -20,6 +20,16 @@ static uint8_t clampLow(uint8_t val, uint8_t threshold = 8) {
   return val < threshold ? 0 : val;
 }
 
+// Mirrors lib/scene-compositor.ts's scrollOffsetX(). The element enters from
+// the right edge and wraps once it has travelled its own width past the left
+// edge, so every element type scrolls with the same cadence regardless of how
+// its width is derived (measured text, stored image width, icon grid x scale).
+static int16_t scrollOffsetX(int16_t baseX, uint16_t contentWidth, uint16_t sceneWidth, float animPhase) {
+  float totalTravel = (float)contentWidth + (float)sceneWidth;
+  float offset = fmodf(animPhase, totalTravel);
+  return baseX + sceneWidth - (int16_t)offset;
+}
+
 static void hsvToRgb(float hueDeg, uint8_t &r, uint8_t &g, uint8_t &b) {
   hueDeg = fmodf(hueDeg, 360.0f);
   if (hueDeg < 0) hueDeg += 360.0f;
@@ -288,26 +298,35 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
     switch (el.type) {
       case ElementType::TEXT: {
         display.setTextSize(el.size);
+        if (el.animType == AnimType::SCROLL) {
+          int16_t bx, by;
+          uint16_t tw, th;
+          display.getTextBounds(el.text, 0, 0, &bx, &by, &tw, &th);
+          drawX = scrollOffsetX(drawX, tw, scene.width, el.animPhase);
+        }
         display.setTextColor(color);
         display.setCursor(drawX, drawY);
         display.print(el.text);
         break;
       }
       case ElementType::SCROLL_TEXT: {
+        // scrollText scrolls unconditionally — its motion is the element type
+        // itself, driven by whatever animation keeps animPhase advancing.
         display.setTextSize(el.size);
         int16_t bx, by;
         uint16_t tw, th;
         display.getTextBounds(el.text, 0, 0, &bx, &by, &tw, &th);
-        float totalTravel = tw + scene.width;
-        float offset = fmodf(el.animPhase, totalTravel);
-        int16_t sx = el.x + scene.width - (int16_t)offset;
+        drawX = scrollOffsetX(drawX, tw, scene.width, el.animPhase);
         display.setTextColor(color);
-        display.setCursor(sx, drawY);
+        display.setCursor(drawX, drawY);
         display.print(el.text);
         break;
       }
       case ElementType::IMAGE: {
         if (!el.pixels) break;
+        if (el.animType == AnimType::SCROLL) {
+          drawX = scrollOffsetX(drawX, el.imgWidth, scene.width, el.animPhase);
+        }
         for (uint16_t py = 0; py < el.imgHeight; py++) {
           for (uint16_t px = 0; px < el.imgWidth; px++) {
             display.drawPixel(drawX + px, drawY + py, el.pixels[(uint32_t)py * el.imgWidth + px]);
@@ -322,6 +341,12 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
           const char *fmt = el.format == "HH:mm:ss" ? "%H:%M:%S" : "%H:%M";
           strftime(buf, sizeof(buf), fmt, &timeinfo);
           display.setTextSize(el.size);
+          if (el.animType == AnimType::SCROLL) {
+            int16_t bx, by;
+            uint16_t tw, th;
+            display.getTextBounds(buf, 0, 0, &bx, &by, &tw, &th);
+            drawX = scrollOffsetX(drawX, tw, scene.width, el.animPhase);
+          }
           display.setTextColor(color);
           display.setCursor(drawX, drawY);
           display.print(buf);
@@ -336,6 +361,12 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
           snprintf(buf, sizeof(buf), "%.0fC", el.weatherTempC);
         }
         display.setTextSize(el.size);
+        if (el.animType == AnimType::SCROLL) {
+          int16_t bx, by;
+          uint16_t tw, th;
+          display.getTextBounds(buf, 0, 0, &bx, &by, &tw, &th);
+          drawX = scrollOffsetX(drawX, tw, scene.width, el.animPhase);
+        }
         display.setTextColor(color);
         display.setCursor(drawX, drawY);
         display.print(buf);
@@ -343,7 +374,12 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
       }
       case ElementType::ICON: {
         const uint16_t *rows = findIcon(el.iconId.c_str());
-        if (rows) drawIcon(display, rows, drawX, drawY, color, el.scale);
+        if (rows) {
+          if (el.animType == AnimType::SCROLL) {
+            drawX = scrollOffsetX(drawX, ICON_GRID_SIZE * el.scale, scene.width, el.animPhase);
+          }
+          drawIcon(display, rows, drawX, drawY, color, el.scale);
+        }
         break;
       }
       default:
