@@ -90,13 +90,18 @@ export function MoodReactionPreview({
     return () => cancelAnimationFrame(raf)
   }, [reaction, panelWidth, panelHeight, replayDelayMs, scene])
 
+  // `px` is the width budget; height follows the panel's aspect ratio.
   return (
     <canvas
       ref={canvasRef}
       width={panelWidth}
       height={panelHeight}
       className="rounded-md border border-border"
-      style={{ width: px, height: px, imageRendering: "pixelated" }}
+      style={{
+        width: px,
+        height: px * (panelHeight / panelWidth),
+        imageRendering: "pixelated",
+      }}
     />
   )
 }

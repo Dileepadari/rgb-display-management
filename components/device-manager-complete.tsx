@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Trash2, Wifi, WifiOff, Sparkles, Settings2, ChevronDown } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PANEL_LAYOUTS } from "@/lib/panel-layouts"
 import useSWR from "swr"
 
 interface Device {
@@ -426,6 +428,33 @@ function DeviceConfigDialog({
         </AlertDialogHeader>
 
         <div className="space-y-4">
+          <div className="space-y-1">
+            <Label>Wall shape</Label>
+            <Select
+              value={
+                PANEL_LAYOUTS.find((l) => l.cols === form.panel_cols && l.rows === form.panel_rows)?.id ??
+                "custom"
+              }
+              onValueChange={(v) => {
+                if (v === "custom") return
+                const layout = PANEL_LAYOUTS.find((l) => l.id === v)
+                if (layout) setForm({ ...form, panel_cols: layout.cols, panel_rows: layout.rows })
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PANEL_LAYOUTS.map((layout) => (
+                  <SelectItem key={layout.id} value={layout.id}>
+                    {layout.label} ({layout.cols * form.panel_unit_size}x{layout.rows * form.panel_unit_size}px)
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">Custom (set below)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label>Columns</Label>

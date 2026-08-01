@@ -95,6 +95,10 @@ export function PlaylistPreview({
     )
   }
 
+  // `px` is the width budget; height follows the wall's real aspect ratio so a
+  // 2-panel-wide scene renders wide instead of being squashed into a square.
+  const aspect = (current?.width ?? 64) / (current?.height ?? 64)
+
   return (
     <div className="space-y-1.5" style={{ width: px }}>
       <div className="scanlines relative overflow-hidden rounded-md border border-border bg-black">
@@ -102,7 +106,7 @@ export function PlaylistPreview({
           ref={canvasRef}
           width={current?.width ?? 64}
           height={current?.height ?? 64}
-          style={{ width: px, height: px, imageRendering: "pixelated", display: "block" }}
+          style={{ width: px, height: px / aspect, imageRendering: "pixelated", display: "block" }}
         />
       </div>
       <div className="flex items-center justify-between gap-2">

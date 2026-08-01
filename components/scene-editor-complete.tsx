@@ -35,6 +35,7 @@ import {
   Cloud,
   Shapes,
   Smile,
+  Tv,
   GripVertical,
   ChevronsUp,
   ChevronsDown,
@@ -68,6 +69,7 @@ import {
   type RenderCaches,
 } from "@/lib/scene-compositor"
 import { SCENE_TEMPLATES } from "@/lib/scene-templates"
+import { PANEL_LAYOUTS, layoutForPixels, layoutPixels } from "@/lib/panel-layouts"
 import { createClient } from "@/lib/supabase/client"
 
 interface Scene {
@@ -298,24 +300,62 @@ export function SceneEditorComplete() {
                     placeholder="Scene description"
                   />
                 </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="gap-1.5">
+                    Panel size
+                    <HelpTip>
+                      How many 64x64 modules your wall is built from. This has to match how the device is
+                      physically wired, or the scene will be cropped or letterboxed on the panel.
+                    </HelpTip>
+                  </Label>
+                  <Select
+                    value={layoutForPixels(formData.panel_width, formData.panel_height)?.id ?? "custom"}
+                    onValueChange={(v) => {
+                      if (v === "custom") return
+                      const layout = PANEL_LAYOUTS.find((l) => l.id === v)
+                      if (!layout) return
+                      const { width, height } = layoutPixels(layout)
+                      setFormData({ ...formData, panel_width: width, panel_height: height })
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PANEL_LAYOUTS.map((layout) => {
+                        const { width, height } = layoutPixels(layout)
+                        return (
+                          <SelectItem key={layout.id} value={layout.id}>
+                            {layout.label} ({width}x{height}px)
+                          </SelectItem>
+                        )
+                      })}
+                      {!layoutForPixels(formData.panel_width, formData.panel_height) && (
+                        <SelectItem value="custom">
+                          Custom ({formData.panel_width}x{formData.panel_height}px)
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
-                  <Label htmlFor="scene-width">Panel Width (pixels)</Label>
+                  <Label htmlFor="scene-width">Width (pixels)</Label>
                   <Input
                     id="scene-width"
                     type="number"
                     min="1"
-                    max="512"
+                    max="1024"
                     value={formData.panel_width}
                     onChange={(e) => setFormData({ ...formData, panel_width: Number.parseInt(e.target.value) })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="scene-height">Panel Height (pixels)</Label>
+                  <Label htmlFor="scene-height">Height (pixels)</Label>
                   <Input
                     id="scene-height"
                     type="number"
                     min="1"
-                    max="512"
+                    max="1024"
                     value={formData.panel_height}
                     onChange={(e) => setFormData({ ...formData, panel_height: Number.parseInt(e.target.value) })}
                   />
@@ -379,11 +419,12 @@ export function SceneEditorComplete() {
             >
               {/* Scenes are visual things — showing the actual composition
                   beats showing its element count. */}
-              <div className="scanlines relative aspect-video w-full overflow-hidden border-b border-border bg-black">
+              <div className="scanlines relative flex h-36 w-full items-center justify-center overflow-hidden border-b border-border bg-black">
                 <SceneThumbnail
                   width={scene.panel_width}
                   height={scene.panel_height}
                   elements={normalizeSceneElements(scene.elements ?? [])}
+                  fit="contain"
                 />
               </div>
               <CardContent className="p-3">
@@ -447,6 +488,18 @@ export function SceneEditorComplete() {
               setSelectedScene(updated)
             }}
           />
+        )}
+
+        {!selectedScene && (
+          <Card className="flex min-h-72 flex-col items-center justify-center gap-3 p-10 text-center">
+            <Tv className="text-muted-foreground h-8 w-8" />
+            <div>
+              <p className="font-medium">Pick a scene to edit it</p>
+              <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+                Choose one on the left to open the canvas, or create a new scene to start from a template.
+              </p>
+            </div>
+          </Card>
         )}
       </div>
     </div>

@@ -20,12 +20,19 @@ export function SceneThumbnail({
   elements,
   className,
   animated = true,
+  fit = "width",
 }: {
   width: number
   height: number
   elements: SceneElement[]
   className?: string
   animated?: boolean
+  /**
+   * "width" fills the container and lets height follow the wall's shape.
+   * "contain" fits inside a fixed-height box instead, so a 1x1 wall and a
+   * 4x1 wall produce cards of the same height in a list.
+   */
+  fit?: "width" | "contain"
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const runtimeRef = useRef<AnimRuntime[]>(createRuntimeState(elements.length))
@@ -63,11 +70,22 @@ export function SceneThumbnail({
       width={width}
       height={height}
       className={className}
-      style={{
-        width: "100%",
-        aspectRatio: `${width} / ${height}`,
-        imageRendering: "pixelated",
-      }}
+      style={
+        fit === "contain"
+          ? {
+              maxWidth: "100%",
+              maxHeight: "100%",
+              height: "100%",
+              width: "auto",
+              aspectRatio: `${width} / ${height}`,
+              imageRendering: "pixelated",
+            }
+          : {
+              width: "100%",
+              aspectRatio: `${width} / ${height}`,
+              imageRendering: "pixelated",
+            }
+      }
     />
   )
 }

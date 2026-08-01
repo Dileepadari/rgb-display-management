@@ -221,7 +221,7 @@ export function PlaylistManagerComplete() {
         </Card>
       )}
 
-      <div className="stagger grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="stagger grid grid-cols-1 items-start gap-6 xl:grid-cols-[340px_1fr]">
         <div className="grid gap-4">
           {!isLoading && (!playlists || playlists.length === 0) && (
             <p className="text-muted-foreground text-sm">No playlists yet. Create one to get started.</p>
@@ -233,12 +233,12 @@ export function PlaylistManagerComplete() {
               onClick={() => setSelectedPlaylist(playlist)}
             >
               <CardContent className="pt-6">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div className="flex flex-col justify-between gap-4">
                   <PlaylistPreview
                     items={toPreviewItems(playlist.scenes ?? [], sceneList)}
                     loop={playlist.loop}
                     shuffle={playlist.shuffle}
-                    px={132}
+                    px={276}
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -309,6 +309,18 @@ export function PlaylistManagerComplete() {
               setSelectedPlaylist(updated)
             }}
           />
+        )}
+
+        {!selectedPlaylist && (
+          <Card className="flex min-h-72 flex-col items-center justify-center gap-3 p-10 text-center">
+            <Play className="text-muted-foreground h-8 w-8" />
+            <div>
+              <p className="font-medium">Pick a playlist to edit it</p>
+              <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+                Choose one on the left to add scenes, set how long each holds, and push it to a panel.
+              </p>
+            </div>
+          </Card>
         )}
       </div>
     </div>

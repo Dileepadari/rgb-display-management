@@ -220,15 +220,16 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     className="spring group cursor-pointer gap-0 overflow-hidden py-0"
                     onClick={() => onNavigate?.("devices")}
                   >
-                    <div className="scanlines relative aspect-square w-full overflow-hidden bg-black">
+                    <div className="scanlines relative flex h-44 w-full items-center justify-center overflow-hidden bg-black">
                       {scene ? (
                         <SceneThumbnail
                           width={scene.panel_width}
                           height={scene.panel_height}
                           elements={scene.elements ?? []}
+                          fit="contain"
                         />
                       ) : (
-                        <div className="text-muted-foreground flex h-full items-center justify-center">
+                        <div className="text-muted-foreground flex h-full w-full items-center justify-center">
                           <MonitorPlay className="h-6 w-6" />
                         </div>
                       )}
