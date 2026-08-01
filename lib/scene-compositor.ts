@@ -110,6 +110,38 @@ function scrollOffsetX(baseX: number, contentWidth: number, sceneWidth: number, 
   return baseX + sceneWidth - offset
 }
 
+function fontSizeFor(el: SceneElement): number {
+  return el.type === "text" || el.type === "scrollText" || el.type === "clock" || el.type === "weather"
+    ? el.size * 8
+    : 8
+}
+
+// Static footprint of an element at its authored position, used for canvas
+// hit-testing in the editor. Clock/weather are measured from a representative
+// string since their real text changes every tick.
+export function elementBounds(
+  ctx: CanvasRenderingContext2D,
+  el: SceneElement,
+): { x: number; y: number; width: number; height: number } {
+  const fontSize = fontSizeFor(el)
+  ctx.font = `${fontSize}px monospace`
+  const box = (width: number, height: number) => ({ x: el.x, y: el.y, width, height })
+
+  switch (el.type) {
+    case "text":
+    case "scrollText":
+      return box(ctx.measureText(el.text).width, fontSize)
+    case "image":
+      return box(el.width, el.height)
+    case "clock":
+      return box(ctx.measureText(el.format === "HH:mm:ss" ? "00:00:00" : "00:00").width, fontSize)
+    case "weather":
+      return box(ctx.measureText("-99C").width, fontSize)
+    case "icon":
+      return box(ICON_GRID_SIZE * el.scale, ICON_GRID_SIZE * el.scale)
+  }
+}
+
 export function renderScene(
   ctx: CanvasRenderingContext2D,
   sceneWidth: number,
@@ -150,7 +182,7 @@ export function renderScene(
       drawY += Math.round(Math.sin(rt.animPhase * 2 * Math.PI) * 4)
     }
 
-    const fontSize = el.type === "text" || el.type === "scrollText" || el.type === "clock" || el.type === "weather" ? el.size * 8 : 8
+    const fontSize = fontSizeFor(el)
     ctx.textBaseline = "top"
     ctx.font = `${fontSize}px monospace`
 
