@@ -48,6 +48,39 @@ describe("character sprites", () => {
     })
   }
 
+  // An emote that looks like idle is worse than no emote — you set a mood and
+  // nothing appears to happen. These assert each one is actually distinct.
+  describe("emotes are visually distinguishable", () => {
+    const differingPixels = (a: string[], b: string[]) => {
+      let n = 0
+      for (let row = 0; row < CHARACTER_GRID_SIZE; row++) {
+        for (let col = 0; col < CHARACTER_GRID_SIZE; col++) {
+          if (a[row][col] !== b[row][col]) n++
+        }
+      }
+      return n
+    }
+
+    for (const [characterId, def] of Object.entries(CHARACTERS)) {
+      const idle = def.emotes.idle.frames[0]
+
+      for (const [emoteId, emote] of Object.entries(def.emotes)) {
+        if (emoteId === "idle") continue
+        it(`${characterId}/${emoteId} differs from idle`, () => {
+          expect(differingPixels(idle, emote.frames[0])).toBeGreaterThanOrEqual(6)
+        })
+      }
+
+      it(`${characterId} animates on every multi-frame emote`, () => {
+        for (const [emoteId, emote] of Object.entries(def.emotes)) {
+          if (emote.frames.length < 2) continue
+          const moved = emote.frames.some((f) => differingPixels(emote.frames[0], f) > 0)
+          expect(moved, `${characterId}/${emoteId} frames are all identical`).toBe(true)
+        }
+      })
+    }
+  })
+
   it("cycles frames at the emote's fps and wraps", () => {
     expect(characterFrameIndex(4, 2, 0)).toBe(0)
     expect(characterFrameIndex(4, 2, 250)).toBe(1)

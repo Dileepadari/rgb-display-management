@@ -80,8 +80,8 @@ export const iconElementSchema = z.object({
 export const characterElementSchema = z.object({
   type: z.literal("character"),
   ...baseElement,
-  character: z.enum(["cat", "dog", "person", "robot"]).catch("cat"),
-  emote: z.enum(["idle", "happy", "sad", "wave", "sleep"]).catch("idle"),
+  character: z.enum(["cat", "dog", "bunny", "person", "robot", "bird", "ghost", "alien"]).catch("cat"),
+  emote: z.enum(["idle", "happy", "sad", "wave", "sleep", "love", "angry", "dance", "think"]).catch("idle"),
   scale: z.number().int().min(1).max(8).default(1),
 })
 
