@@ -10,7 +10,7 @@ import { sceneElementSchema } from "../lib/scene-schema"
 
 // The firmware and the web app implement the same feature set twice, in two
 // languages. Nothing but discipline keeps them together, and a drift shows up
-// only on real hardware — where it looks like "the panel is broken" rather
+// only on real hardware - where it looks like "the panel is broken" rather
 // than "someone added an enum value in one place".
 //
 // These read the actual firmware sources and assert the contracts match. They

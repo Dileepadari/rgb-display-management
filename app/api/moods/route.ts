@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 
 // Mirrors scripts/006_mood_reactions.sql's CHECK constraints and
-// lib/mood-reaction.ts's vocabularies — the firmware only implements these.
+// lib/mood-reaction.ts's vocabularies - the firmware only implements these.
 const createMoodSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),

@@ -310,7 +310,7 @@ const AdminDashboard = ({ onNavigate }: { onNavigate?: (page: string) => void })
             <div className="border-b border-border p-6">
               <h3 className="text-lg font-semibold">Recent activity</h3>
               <p className="text-muted-foreground text-sm">
-                Everything that changed what your panels are showing — scene and playlist pushes, mood reactions,
+                Everything that changed what your panels are showing - scene and playlist pushes, mood reactions,
                 and devices going online or offline.
               </p>
             </div>

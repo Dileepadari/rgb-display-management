@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     if (moodError || !mood) return NextResponse.json({ error: "Mood not found" }, { status: 404 })
 
     // A mood layers on top of existing content, so there must be content to
-    // layer onto — otherwise the character would perform over a black panel.
+    // layer onto - otherwise the character would perform over a black panel.
     const { data: assignment } = await supabase
       .from("device_assignments")
       .select("device_id")
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       .maybeSingle()
     if (!assignment) {
       return NextResponse.json(
-        { error: "Assign a scene or playlist to this device first — a mood plays on top of what's already showing." },
+        { error: "Assign a scene or playlist to this device first - a mood plays on top of what's already showing." },
         { status: 409 },
       )
     }
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   }
 }
 
-// Clearing a mood is also a revision bump — the panel needs to be told to stop
+// Clearing a mood is also a revision bump - the panel needs to be told to stop
 // drawing the character, not just left to time out.
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {

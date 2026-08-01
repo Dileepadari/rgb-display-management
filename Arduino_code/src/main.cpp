@@ -227,8 +227,8 @@ void setupTime() {
 
   // The web app stores POSIX TZ strings (see lib/timezones.ts) precisely
   // because this chip has no tzdata to resolve an IANA name like
-  // "Asia/Kolkata" with. If one arrives anyway — an older row, or a hand-edited
-  // value — say so rather than silently running on UTC.
+  // "Asia/Kolkata" with. If one arrives anyway - an older row, or a hand-edited
+  // value - say so rather than silently running on UTC.
   if (appliedTimezone.length() > 0 && appliedTimezone.indexOf('/') < 0) {
     setenv("TZ", appliedTimezone.c_str(), 1);
   } else {
@@ -237,7 +237,7 @@ void setupTime() {
                     "set a POSIX TZ string in the web app instead. Falling back to the built-in offset.\n",
                     appliedTimezone.c_str());
     }
-    // No usable value yet — fall back to the compile-time offset so a device
+    // No usable value yet - fall back to the compile-time offset so a device
     // with no assignment still shows a plausible clock.
     static char fallback[32];
     snprintf(fallback, sizeof(fallback), "UTC%+ld", -gmtOffsetSec / 3600);
@@ -369,7 +369,7 @@ void applyNewFeed() {
 }
 
 // Fills playlistOrder with 0..n-1, shuffled when the playlist asks for it.
-// Fisher-Yates, same as components/playlist-preview.tsx — every scene plays
+// Fisher-Yates, same as components/playlist-preview.tsx - every scene plays
 // once per cycle instead of independent picks that can repeat or starve.
 void buildPlaylistOrder() {
   const uint8_t n = feed.isPlaylist ? feed.playlist.itemCount : 0;

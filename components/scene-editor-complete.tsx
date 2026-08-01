@@ -417,7 +417,7 @@ export function SceneEditorComplete() {
               className={`spring cursor-pointer gap-0 overflow-hidden py-0 ${selectedScene?.id === scene.id ? "ring-2 ring-primary" : ""}`}
               onClick={() => setSelectedScene(scene)}
             >
-              {/* Scenes are visual things — showing the actual composition
+              {/* Scenes are visual things - showing the actual composition
                   beats showing its element count. */}
               <div className="scanlines relative flex h-36 w-full items-center justify-center overflow-hidden border-b border-border bg-black">
                 <SceneThumbnail

@@ -7,7 +7,7 @@ const ONLINE_THRESHOLD_MS = 5 * 60 * 1000 // no heartbeat in 5 min => considered
 // (field3, written by the firmware's sendHeartbeat()) and syncs
 // devices.is_online / last_sync + a telemetry row.
 //
-// This is NOT wired to a Vercel Cron — the plan's cron allowance is limited, so
+// This is NOT wired to a Vercel Cron - the plan's cron allowance is limited, so
 // it's driven by an external scheduler instead (see DEVDOC.md §8). Call it
 // every ~5 minutes to match ONLINE_THRESHOLD_MS below. Protected by
 // CRON_SECRET because it has to skip the normal user-session gate (proxy.ts)

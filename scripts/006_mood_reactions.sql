@@ -2,7 +2,7 @@
 -- whatever scene is playing, performs an emote, then either stays or leaves.
 --
 -- Before this, applying a mood wrote a row to device_moods that nothing ever
--- read — no revision bump, no ThingSpeak notification, nothing in the device
+-- read - no revision bump, no ThingSpeak notification, nothing in the device
 -- feed. The panel never learned a mood existed. These columns are what the
 -- feed and firmware now render.
 
@@ -47,7 +47,7 @@ ALTER TABLE public.moods ADD CONSTRAINT moods_hold_check
 ALTER TABLE public.moods DROP COLUMN IF EXISTS icon;
 ALTER TABLE public.moods DROP COLUMN IF EXISTS animation;
 
--- Which mood is currently live on a device, and when it started — the
+-- Which mood is currently live on a device, and when it started - the
 -- firmware needs the start time to know how far through the entrance/hold/exit
 -- lifecycle it is.
 ALTER TABLE public.device_assignments ADD COLUMN IF NOT EXISTS active_mood_id UUID

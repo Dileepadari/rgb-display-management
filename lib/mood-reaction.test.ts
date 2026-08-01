@@ -8,7 +8,7 @@ import {
   type MoodReaction,
 } from "./mood-reaction"
 
-// This lifecycle is implemented twice — here and in Arduino_code/src/mood.cpp.
+// This lifecycle is implemented twice - here and in Arduino_code/src/mood.cpp.
 // These lock down the boundaries the two must agree on.
 const base: MoodReaction = {
   character: "cat",

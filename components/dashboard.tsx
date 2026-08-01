@@ -139,7 +139,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
               on your terms.
             </h1>
             <p className="text-muted-foreground mt-3 max-w-md text-sm leading-relaxed">
-              Author scenes, rotate them in playlists, send a mood — then push it all to the wall.
+              Author scenes, rotate them in playlists, send a mood - then push it all to the wall.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-2">
               {quickActions.map((action) => (
@@ -203,7 +203,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           ) : devicesList.length === 0 ? (
             <Card className="flex flex-col items-center gap-3 p-10 text-center">
               <Mascot state="sleep" px={72} />
-              <p className="text-muted-foreground text-sm">No panels yet — add one and it&apos;ll appear here.</p>
+              <p className="text-muted-foreground text-sm">No panels yet - add one and it&apos;ll appear here.</p>
               <Button size="sm" onClick={() => onNavigate?.("devices")} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add Device

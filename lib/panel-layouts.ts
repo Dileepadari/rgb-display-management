@@ -20,15 +20,15 @@ export interface PanelLayout {
 
 export const PANEL_LAYOUTS: PanelLayout[] = [
   { id: "1x1", cols: 1, rows: 1, label: "1 panel" },
-  { id: "2x1", cols: 2, rows: 1, label: "2 panels — side by side" },
-  { id: "1x2", cols: 1, rows: 2, label: "2 panels — stacked" },
-  { id: "3x1", cols: 3, rows: 1, label: "3 panels — in a row" },
-  { id: "1x3", cols: 1, rows: 3, label: "3 panels — in a column" },
-  { id: "2x2", cols: 2, rows: 2, label: "4 panels — 2 x 2 square" },
-  { id: "4x1", cols: 4, rows: 1, label: "4 panels — in a row" },
-  { id: "3x2", cols: 3, rows: 2, label: "6 panels — 3 wide, 2 tall" },
-  { id: "3x3", cols: 3, rows: 3, label: "9 panels — 3 x 3 square" },
-  { id: "4x2", cols: 4, rows: 2, label: "8 panels — 4 wide, 2 tall" },
+  { id: "2x1", cols: 2, rows: 1, label: "2 panels - side by side" },
+  { id: "1x2", cols: 1, rows: 2, label: "2 panels - stacked" },
+  { id: "3x1", cols: 3, rows: 1, label: "3 panels - in a row" },
+  { id: "1x3", cols: 1, rows: 3, label: "3 panels - in a column" },
+  { id: "2x2", cols: 2, rows: 2, label: "4 panels - 2 x 2 square" },
+  { id: "4x1", cols: 4, rows: 1, label: "4 panels - in a row" },
+  { id: "3x2", cols: 3, rows: 2, label: "6 panels - 3 wide, 2 tall" },
+  { id: "3x3", cols: 3, rows: 3, label: "9 panels - 3 x 3 square" },
+  { id: "4x2", cols: 4, rows: 2, label: "8 panels - 4 wide, 2 tall" },
 ]
 
 export function layoutPixels(layout: Pick<PanelLayout, "cols" | "rows">, unit = PANEL_UNIT_SIZE) {
@@ -43,7 +43,7 @@ export function layoutForPixels(width: number, height: number, unit = PANEL_UNIT
   return PANEL_LAYOUTS.find((l) => l.cols === cols && l.rows === rows) ?? null
 }
 
-/** "3 x 2 panels (192x128px)" — one string for describing a wall in the UI. */
+/** "3 x 2 panels (192x128px)" - one string for describing a wall in the UI. */
 export function describeLayout(width: number, height: number, unit = PANEL_UNIT_SIZE): string {
   const layout = layoutForPixels(width, height, unit)
   if (layout) return `${layout.label} · ${width}x${height}px`

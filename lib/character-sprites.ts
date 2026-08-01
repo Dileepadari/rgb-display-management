@@ -5,7 +5,7 @@
 // So a character is a *body* plus small *patches* (a face, an arm, a prop),
 // and the emote list says which patches to stack per frame. Everything is
 // flattened at module load into the same `frames: string[][]` shape the
-// renderer and Arduino_code/include/characters.h generator already consume —
+// renderer and Arduino_code/include/characters.h generator already consume -
 // so this file is pure authoring convenience with no change downstream.
 //
 // The face patches are shared across characters, which is deliberate: the
@@ -154,7 +154,7 @@ const FACES: Record<string, string[]> = {
 const PROPS: Record<string, Patch> = {
   // Arms attach at the torso (rows 12-15 on every body) and reach up alongside
   // the head when raised, so the gesture reads as an arm rather than a stray
-  // nub. A raised arm is capped with a 2px "hand" — at 16px that blob is what
+  // nub. A raised arm is capped with a 2px "hand" - at 16px that blob is what
   // makes a wave legible at all.
   armLeftUp: { row: 9, col: 1, grid: ["bbo", "bbo", "ob.", "ob.", "ob.", "ob."] },
   armLeftDown: { row: 12, col: 1, grid: ["ob.", "ob.", "bbo", "bbo"] },
@@ -464,7 +464,7 @@ const ALIEN_BODY = [
 
 // A few bodies want their own eyes: a robot reads as a lit visor rather than
 // eyeballs, a ghost as hollow sockets, an alien as solid almond eyes. Only the
-// faces that would look wrong are overridden — the rest fall through to the
+// faces that would look wrong are overridden - the rest fall through to the
 // shared set, so expressions stay consistent across the cast.
 const ROBOT_FACES: Record<string, string[]> = {
   open:  ["............", ".eeee..eeee.", ".eppe..eppe.", ".eeee..eeee.", "............", "...llllll...", "............"],
@@ -482,7 +482,7 @@ const GHOST_FACES: Record<string, string[]> = {
   think: [".oo.........", "............", ".ooo....ooo.", ".ooo........", "............", "......ooo...", "............"],
 }
 
-// Solid almond eyes, so the pupil code is unused — expressions come from the
+// Solid almond eyes, so the pupil code is unused - expressions come from the
 // brow and mouth rows alone.
 const ALIEN_FACES: Record<string, string[]> = {
   open:  ["............", ".eee....eee.", ".eee....eee.", "..e......e..", "............", "....oooo....", "............"],

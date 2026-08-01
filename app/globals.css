@@ -403,7 +403,7 @@
   animation-delay: calc(var(--stagger-index, 0) * 55ms);
 }
 
-/* Overshoot easing — the difference between "a div moved" and something
+/* Overshoot easing - the difference between "a div moved" and something
    with a bit of physics to it. */
 .spring {
   transition:

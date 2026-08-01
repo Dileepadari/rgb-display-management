@@ -116,7 +116,7 @@ export function MoodBoardComplete() {
 
   // The scene a reaction will actually land on top of, so previews show your
   // real content rather than a stand-in. Playlists rotate, so there's no single
-  // frame to show — those fall back to the neutral backdrop.
+  // frame to show - those fall back to the neutral backdrop.
   const sceneForDevice = (deviceId: string) => {
     const assignment = assignments.find((a) => a.device_id === deviceId)
     if (!assignment || assignment.target_type !== "scene" || !assignment.scene_id) return null
@@ -194,7 +194,7 @@ export function MoodBoardComplete() {
 
       await mutateAssignments()
       if (result.warning) toast.warning(result.warning)
-      else toast.success(`Mood sent — the panel will react on revision ${result.revision}`)
+      else toast.success(`Mood sent - the panel will react on revision ${result.revision}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error sending mood")
     } finally {
@@ -225,7 +225,7 @@ export function MoodBoardComplete() {
           <ul>
             <li>Pick a mood on the left to watch its reaction play in the preview.</li>
             <li>
-              The reaction sits <em>on top of</em> the scene or playlist that device is already showing — it
+              The reaction sits <em>on top of</em> the scene or playlist that device is already showing - it
               doesn&apos;t replace your content.
             </li>
             <li>Send it to a device and the panel performs it immediately, then follows the stay/leave rule.</li>

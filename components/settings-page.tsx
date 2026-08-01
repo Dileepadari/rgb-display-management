@@ -85,7 +85,7 @@ export function SettingsPage() {
     <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
       <PageHeader
         title="Settings"
-        purpose="Your account and how this app looks — nothing here changes what your panels are showing."
+        purpose="Your account and how this app looks - nothing here changes what your panels are showing."
         howTo={
           <ul>
             <li>Your display name is what appears in the sidebar and on activity entries.</li>
@@ -204,7 +204,7 @@ export function SettingsPage() {
             </div>
             <Separator />
             <p className="text-muted-foreground text-xs">
-              Animations follow your system&apos;s &ldquo;reduce motion&rdquo; setting automatically — turn it on in
+              Animations follow your system&apos;s &ldquo;reduce motion&rdquo; setting automatically - turn it on in
               your OS and this app stops animating.
             </p>
           </CardContent>

@@ -7,7 +7,7 @@ import { createRuntimeState, renderScene, tickAnimations, type RenderCaches } fr
 import type { SceneElement } from "@/lib/scene-schema"
 
 // Plays a mood reaction the way the panel will: the character enters, performs
-// its emote, then stays or leaves — over a mock scene so the tint and the
+// its emote, then stays or leaves - over a mock scene so the tint and the
 // "sits on top of your content" behaviour are both visible.
 //
 // Uses the same lib/mood-reaction.ts lifecycle the firmware mirrors, so what
@@ -21,7 +21,7 @@ export function MoodReactionPreview({
   replayDelayMs = 900,
   /**
    * The scene this reaction will actually play over. Passing the device's real
-   * assigned scene is the point of the preview — you're checking the character
+   * assigned scene is the point of the preview - you're checking the character
    * doesn't land on your clock. Omitted, a neutral stand-in is drawn instead.
    */
   scene,
@@ -62,7 +62,7 @@ export function MoodReactionPreview({
       ctx.fillRect(0, 0, panelWidth, panelHeight)
 
       if (scene && scene.elements.length > 0) {
-        // The real content, animating, underneath — so the preview answers
+        // The real content, animating, underneath - so the preview answers
         // "what will my panel look like" rather than "what does this sprite do".
         tickAnimations(scene.elements, runtime, now)
         renderScene(ctx, panelWidth, panelHeight, scene.elements, runtime, cachesRef.current, now)

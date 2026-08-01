@@ -533,12 +533,12 @@ function PlaylistItemsEditor({
 
         {items.length >= MAX_PLAYLIST_ITEMS && (
           <p className="text-warning text-xs">
-            {MAX_PLAYLIST_ITEMS} scenes is the limit — the panel keeps the whole playlist in memory so it can
+            {MAX_PLAYLIST_ITEMS} scenes is the limit - the panel keeps the whole playlist in memory so it can
             rotate without re-fetching.
           </p>
         )}
 
-        {/* Plays the rotation you're building, at the durations you've set —
+        {/* Plays the rotation you're building, at the durations you've set -
             the only way to judge whether a scene needs longer before saving. */}
         <div className="flex flex-wrap items-start gap-4">
           <PlaylistPreview
@@ -548,7 +548,7 @@ function PlaylistItemsEditor({
             px={176}
           />
           <p className="text-muted-foreground max-w-[220px] text-xs">
-            Runs at the durations below, honouring this playlist&apos;s loop and shuffle settings — the same way the
+            Runs at the durations below, honouring this playlist&apos;s loop and shuffle settings - the same way the
             panel will.
           </p>
         </div>

@@ -3,7 +3,7 @@
 
 The `image` scene element is fetched by the ESP32 and read as a flat byte
 stream: width * height * 3 bytes, row-major, no header, no palette. That's
-deliberate — the firmware can decode it a pixel at a time as it arrives,
+deliberate - the firmware can decode it a pixel at a time as it arrives,
 without buffering the whole file or linking a PNG/JPEG decoder.
 
 The web app does this in the browser at upload time (see uploadImageAsRaw() in
@@ -14,7 +14,7 @@ Usage:
     python3 converter.py input.png output.raw [width] [height]
 
 Width and height default to 64x64 (one panel). For a multi-panel wall, pass
-the wall's full resolution — e.g. 192 128 for a 3x2 arrangement.
+the wall's full resolution - e.g. 192 128 for a 3x2 arrangement.
 """
 
 import sys
@@ -41,7 +41,7 @@ def convert(src: Path, dest: Path, width: int, height: int) -> None:
     expected = width * height * 3
     actual = dest.stat().st_size
     if actual != expected:
-        sys.exit(f"Wrote {actual} bytes but expected {expected} — the panel will misread this file.")
+        sys.exit(f"Wrote {actual} bytes but expected {expected} - the panel will misread this file.")
 
     print(f"{src} -> {dest}  ({width}x{height}, {actual} bytes)")
 

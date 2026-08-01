@@ -27,7 +27,7 @@
 
 #define MAX_ELEMENTS 12
 // The web app caps a playlist at this many items (lib/playlist-schema.ts) so
-// the two agree — a playlist that parses here but got truncated would rotate
+// the two agree - a playlist that parses here but got truncated would rotate
 // through fewer scenes than the editor showed, silently.
 #define MAX_PLAYLIST_ITEMS 12
 

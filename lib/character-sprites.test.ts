@@ -48,7 +48,7 @@ describe("character sprites", () => {
     })
   }
 
-  // An emote that looks like idle is worse than no emote — you set a mood and
+  // An emote that looks like idle is worse than no emote - you set a mood and
   // nothing appears to happen. These assert each one is actually distinct.
   describe("emotes are visually distinguishable", () => {
     const differingPixels = (a: string[], b: string[]) => {

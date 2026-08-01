@@ -16,7 +16,7 @@ export interface PlaylistPreviewItem {
  * Runs a playlist the way the panel will: each scene animating for its own
  * duration, then advancing, honouring loop and shuffle.
  *
- * A still thumbnail can't show what a playlist *is* — the rotation and the
+ * A still thumbnail can't show what a playlist *is* - the rotation and the
  * timing are the whole point of the feature, so the preview performs them.
  */
 export function PlaylistPreview({
@@ -120,7 +120,7 @@ export function PlaylistPreview({
         {items.map((item, i) => (
           <span
             key={i}
-            title={`${item.sceneName} — ${item.durationSeconds}s`}
+            title={`${item.sceneName} - ${item.durationSeconds}s`}
             className={`h-1 flex-1 rounded-full transition-colors ${i === position ? "bg-primary" : "bg-border"}`}
           />
         ))}

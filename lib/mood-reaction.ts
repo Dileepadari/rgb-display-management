@@ -4,7 +4,7 @@
 // performs an emote, then either stays or leaves. The panel runs this on its
 // own clock (nothing streams frames to it), and the web preview has to agree
 // exactly or "design it here, watch it there" stops being true. So the phase
-// maths lives here and Arduino_code/src/mood.cpp mirrors it line for line —
+// maths lives here and Arduino_code/src/mood.cpp mirrors it line for line -
 // the same arrangement lib/scene-compositor.ts already has with elements.cpp.
 
 export const MOOD_ENTRANCE_MS = 600
@@ -39,7 +39,7 @@ export interface MoodFrameState {
   opacity: number
   /** Sprite scale for this frame; `pop` grows into place. */
   scale: number
-  /** False once a "leave" reaction has finished — draw nothing. */
+  /** False once a "leave" reaction has finished - draw nothing. */
   visible: boolean
 }
 
@@ -107,7 +107,7 @@ export function moodFrameState(
     }
   }
 
-  // Hold — sitting at rest, playing the emote.
+  // Hold - sitting at rest, playing the emote.
   if (elapsedMs < MOOD_ENTRANCE_MS + holdMs) {
     return { phase: "holding", x: rest.x, y: rest.y, opacity: 1, scale: reaction.scale, visible: true }
   }
@@ -117,7 +117,7 @@ export function moodFrameState(
     return { phase: "resting", x: rest.x, y: rest.y, opacity: 1, scale: reaction.scale, visible: true }
   }
 
-  // Exit — the entrance played backwards.
+  // Exit - the entrance played backwards.
   const exitElapsed = elapsedMs - MOOD_ENTRANCE_MS - holdMs
   if (exitElapsed < MOOD_EXIT_MS) {
     const t = ease(progress(exitElapsed, MOOD_EXIT_MS))

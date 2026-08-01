@@ -7,7 +7,7 @@ export type MascotState = "idle" | "happy" | "sleep" | "sad" | "wave" | "think"
 
 /**
  * One of the panel's own characters, living in the app chrome and reacting to
- * what's actually happening — asleep when every panel is offline, waving when
+ * what's actually happening - asleep when every panel is offline, waving when
  * something's live. It's the same sprite renderer the panels use, so the app
  * and the hardware share a personality instead of the app being a generic
  * control surface bolted onto them.

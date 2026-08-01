@@ -3,7 +3,7 @@
 //
 // The lifecycle maths here mirrors lib/mood-reaction.ts exactly. That file is
 // the written spec and the web preview's implementation; this is the panel's.
-// If you change a duration or easing curve, change it in both — the whole
+// If you change a duration or easing curve, change it in both - the whole
 // point of previewing a mood in the browser is that the panel does the same
 // thing.
 //

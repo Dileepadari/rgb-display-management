@@ -188,7 +188,7 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
 
 // 4x4 Bayer threshold matrix, normalised to 0..15. Comparing a pixel's
 // position against this gives a stable, evenly-spread subset of pixels for any
-// coverage level — the standard way to fake partial opacity on a display that
+// coverage level - the standard way to fake partial opacity on a display that
 // has none.
 static const uint8_t BAYER_4X4[4][4] = {
     {0, 8, 2, 10},
@@ -216,7 +216,7 @@ static void drawCharacterDithered(Adafruit_GFX &d, const char *characterId, cons
       const char code = line[col];
       if (code == '.' || code == '\0') continue;
       // Threshold against the sprite cell, not the screen pixel, so the whole
-      // cell of a scaled-up sprite is kept or dropped together — otherwise a
+      // cell of a scaled-up sprite is kept or dropped together - otherwise a
       // scale-4 character dissolves into single pixels instead of fading.
       if (BAYER_4X4[row & 3][col & 3] >= level) continue;
 
@@ -242,7 +242,7 @@ void renderMood(Adafruit_GFX &display, const Mood &mood, uint16_t panelWidth, ui
   if (!s.visible) return;
 
   // Tint wash. Adafruit_GFX has no read-back, so this can't blend with what's
-  // underneath — instead it lays down a sparse dither of the tint colour whose
+  // underneath - instead it lays down a sparse dither of the tint colour whose
   // density tracks tint_strength. At panel distance that reads as a colour
   // wash while leaving most of the scene visible through the gaps.
   const uint8_t strength = (uint8_t)(mood.tintStrength * s.opacity);
@@ -251,7 +251,7 @@ void renderMood(Adafruit_GFX &display, const Mood &mood, uint16_t panelWidth, ui
     // step 2 => every other pixel (~50%), rising to every pixel at 100%.
     const uint8_t step = strength >= 100 ? 1 : (uint8_t)max(2, (int)roundf(100.0f / strength));
     if (step == 1) {
-      // Fully opaque wash — one fill beats 36k drawPixel calls on a 3x3 wall.
+      // Fully opaque wash - one fill beats 36k drawPixel calls on a 3x3 wall.
       display.fillRect(0, 0, panelWidth, panelHeight, tint);
     } else {
       // startWrite()/endWrite() lets the driver hold the transaction open
@@ -267,7 +267,7 @@ void renderMood(Adafruit_GFX &display, const Mood &mood, uint16_t panelWidth, ui
   }
 
   // The web preview fades the character in with canvas alpha. There is no
-  // alpha on a HUB75 panel — a pixel is lit or it isn't — so a fade is done as
+  // alpha on a HUB75 panel - a pixel is lit or it isn't - so a fade is done as
   // an ordered dither: at 50% opacity half the pixels are drawn, in a fixed
   // 4x4 Bayer pattern rather than at random so the sprite doesn't shimmer
   // between frames. Fully opaque takes the plain path and draws every pixel.
