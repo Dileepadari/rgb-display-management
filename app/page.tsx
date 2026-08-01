@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import Navigation from "@/components/navigation"
 import Dashboard from "@/components/dashboard"
@@ -10,21 +10,12 @@ import { PlaylistManagerComplete } from "@/components/playlist-manager-complete"
 import { MoodBoardComplete } from "@/components/mood-board-complete"
 import AdminDashboard from "@/components/admin-dashboard"
 import AuthPage from "@/components/auth-page"
-import { initMQTT } from "@/lib/mqtt-handler"
 
 export default function Home() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, loading } = useAuth()
   const [currentPage, setCurrentPage] = useState("dashboard")
-  const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-    if (isLoggedIn) {
-      initMQTT().catch((err) => console.error("[v0] MQTT init error:", err))
-    }
-  }, [isLoggedIn])
-
-  if (!mounted) {
+  if (loading) {
     return null
   }
 
@@ -33,9 +24,9 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen flex-col bg-background md:h-screen md:flex-row md:overflow-hidden">
       <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      <main className="pt-20 px-4 md:px-8 pb-8">
+      <main className="flex-1 overflow-y-auto">
         {currentPage === "dashboard" && <Dashboard />}
         {currentPage === "scenes" && <SceneEditorComplete />}
         {currentPage === "devices" && <DeviceManagerComplete />}

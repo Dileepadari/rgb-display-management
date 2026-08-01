@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   const res = NextResponse.next({
     request: {
@@ -36,11 +36,19 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession()
+  // getUser() revalidates the session against the Supabase auth server,
+  // unlike getSession() which only trusts the (spoofable) cookie value.
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // If API route and no session, return 401
-  if (request.nextUrl.pathname.startsWith('/api/') && !session) {
+  // Device-facing routes authenticate via their own per-device token, not a
+  // Supabase user session (the ESP32 can't log in) — skip the session gate.
+  // Cron routes authenticate via CRON_SECRET (checked in the route itself).
+  const skipsSessionGate =
+    request.nextUrl.pathname.startsWith('/api/device-feed/') ||
+    request.nextUrl.pathname.startsWith('/api/cron/')
+
+  // If API route and no authenticated user, return 401
+  if (request.nextUrl.pathname.startsWith('/api/') && !skipsSessionGate && !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
