@@ -103,6 +103,18 @@ const ANIMATION_SPEED_HELP: Record<SceneElement["animation"]["type"], string> = 
   bounce: "Bounces per second, four pixels up and down.",
 }
 
+// Speed 0 means "never advance", which reads as a broken animation — a scrolling
+// element in particular parks itself just off the right edge and never returns.
+// So switching an element onto an animation seeds a speed that visibly moves.
+const DEFAULT_ANIMATION_SPEED: Record<SceneElement["animation"]["type"], number> = {
+  none: 0,
+  scroll: 20,
+  blink: 1,
+  pulse: 1,
+  rainbow: 120,
+  bounce: 1,
+}
+
 function defaultElementFor(type: SceneElement["type"], panelWidth: number, panelHeight: number): SceneElement {
   const base = {
     x: 0,
@@ -1072,7 +1084,13 @@ function ElementProperties({
         </Label>
         <Select
           value={element.animation.type}
-          onValueChange={(v) => onChange({ animation: { ...element.animation, type: v as SceneElement["animation"]["type"] } })}
+          onValueChange={(v) => {
+            const type = v as SceneElement["animation"]["type"]
+            // Keep a speed the author already tuned; only seed one when there
+            // isn't a usable value yet (fresh elements default to 0).
+            const speed = element.animation.speed > 0 ? element.animation.speed : DEFAULT_ANIMATION_SPEED[type]
+            onChange({ animation: { type, speed } })
+          }}
         >
           <SelectTrigger>
             <SelectValue />
