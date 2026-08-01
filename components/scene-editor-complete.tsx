@@ -22,11 +22,49 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Trash2, Download, Upload, Send, Type, MoveHorizontal, ImageIcon, Clock, Cloud, Shapes } from "lucide-react"
+import {
+  Plus,
+  Trash2,
+  Download,
+  Upload,
+  Send,
+  Type,
+  MoveHorizontal,
+  ImageIcon,
+  Clock,
+  Cloud,
+  Shapes,
+  GripVertical,
+  ChevronsUp,
+  ChevronsDown,
+  ZoomIn,
+} from "lucide-react"
 import useSWR from "swr"
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core"
+import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { Slider } from "@/components/ui/slider"
+import { HelpTip } from "@/components/help-tip"
+import { SceneThumbnail } from "@/components/scene-thumbnail"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type SceneElement, normalizeSceneElements } from "@/lib/scene-schema"
 import { ICON_MANIFEST, type IconId } from "@/lib/icon-manifest"
-import { createRuntimeState, tickAnimations, renderScene, type AnimRuntime, type RenderCaches } from "@/lib/scene-compositor"
+import {
+  createRuntimeState,
+  tickAnimations,
+  renderScene,
+  elementBounds,
+  type AnimRuntime,
+  type RenderCaches,
+} from "@/lib/scene-compositor"
+import { SCENE_TEMPLATES } from "@/lib/scene-templates"
 import { createClient } from "@/lib/supabase/client"
 
 interface Scene {
@@ -54,6 +92,15 @@ const ELEMENT_TYPE_META: Record<SceneElement["type"], { label: string; icon: typ
   clock: { label: "Clock", icon: Clock },
   weather: { label: "Weather", icon: Cloud },
   icon: { label: "Icon", icon: Shapes },
+}
+
+const ANIMATION_SPEED_HELP: Record<SceneElement["animation"]["type"], string> = {
+  none: "No animation is running.",
+  scroll: "Pixels travelled per second, right to left.",
+  blink: "Blinks per second.",
+  pulse: "Brightness cycles per second.",
+  rainbow: "Degrees of hue rotation per second — 360 is one full colour wheel per second.",
+  bounce: "Bounces per second, four pixels up and down.",
 }
 
 function defaultElementFor(type: SceneElement["type"], panelWidth: number, panelHeight: number): SceneElement {
@@ -130,22 +177,28 @@ export function SceneEditorComplete() {
     panel_height: 64,
   })
   const [loading, setLoading] = useState(false)
+  const [templateId, setTemplateId] = useState("blank")
 
   const handleCreateScene = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      const template = SCENE_TEMPLATES.find((t) => t.id === templateId) ?? SCENE_TEMPLATES[0]
       const response = await fetch("/api/scenes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, elements: [] }),
+        body: JSON.stringify({
+          ...formData,
+          elements: template.elements(formData.panel_width, formData.panel_height),
+        }),
       })
 
       if (!response.ok) throw new Error("Failed to create scene")
 
       await mutate()
       setFormData({ name: "", description: "", panel_width: 64, panel_height: 64 })
+      setTemplateId("blank")
       setShowForm(false)
       toast.success("Scene created")
     } catch (err) {
@@ -248,6 +301,36 @@ export function SceneEditorComplete() {
                   />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label>Start from a template</Label>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+                  {SCENE_TEMPLATES.map((template) => {
+                    const isSelected = templateId === template.id
+                    return (
+                      <button
+                        key={template.id}
+                        type="button"
+                        onClick={() => setTemplateId(template.id)}
+                        className={`hover-lift rounded-lg border p-2 text-left transition-colors ${
+                          isSelected ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+                        }`}
+                      >
+                        <div className="mb-2 overflow-hidden rounded border border-border bg-black">
+                          <SceneThumbnail
+                            width={formData.panel_width || 64}
+                            height={formData.panel_height || 64}
+                            elements={template.elements(formData.panel_width || 64, formData.panel_height || 64)}
+                          />
+                        </div>
+                        <p className="text-xs font-medium">{template.name}</p>
+                        <p className="text-muted-foreground text-xs leading-tight">{template.description}</p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
                   {loading ? "Creating..." : "Create Scene"}
@@ -373,6 +456,22 @@ function SceneDetailEditor({
     setSelectedIndex(null)
   }
 
+  // Array order is z-order: later entries paint over earlier ones.
+  const moveElement = (from: number, to: number) => {
+    if (to < 0 || to >= elements.length || from === to) return
+    setElements((prev) => {
+      const next = [...prev]
+      const [moved] = next.splice(from, 1)
+      next.splice(to, 0, moved)
+      return next
+    })
+    setSelectedIndex(to)
+  }
+
+  const reorderElements = (from: number, to: number) => moveElement(from, to)
+  const bringToFront = (index: number) => moveElement(index, elements.length - 1)
+  const sendToBack = (index: number) => moveElement(index, 0)
+
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -421,120 +520,349 @@ function SceneDetailEditor({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px_280px]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Live Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <SceneCanvasPreview
+      <ResizablePanelGroup
+        direction="horizontal"
+        autoSaveId="scene-editor-panels"
+        className="hidden min-h-[560px] items-stretch gap-0 lg:flex"
+      >
+        <ResizablePanel defaultSize={50} minSize={25}>
+          <div className="h-full pr-2">
+            <PreviewPanel
               scene={scene}
               elements={elements}
               selectedIndex={selectedIndex}
+              onSelect={setSelectedIndex}
               onDragElement={(x, y) => {
                 if (selectedIndex != null) updateElement(selectedIndex, { x, y })
               }}
+              devices={devices}
+              assignDeviceId={assignDeviceId}
+              setAssignDeviceId={setAssignDeviceId}
+              assigning={assigning}
+              onAssign={handleAssign}
             />
-            <p className="text-muted-foreground text-xs">
-              {selected ? "Drag anywhere on the preview to reposition the selected element." : "Select an element below to reposition it by dragging."}
-            </p>
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={25} minSize={15}>
+          <div className="h-full px-2">
+            <ElementsPanel
+              elements={elements}
+              selectedIndex={selectedIndex}
+              onSelect={setSelectedIndex}
+              onAdd={addElement}
+              onReorder={reorderElements}
+              onBringToFront={bringToFront}
+              onSendToBack={sendToBack}
+            />
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={25} minSize={15}>
+          <div className="h-full pl-2">
+            <PropertiesPanel
+              selected={selected}
+              selectedIndex={selectedIndex}
+              updateElement={updateElement}
+              removeElement={removeElement}
+              uploadingImage={uploadingImage}
+              setUploadingImage={setUploadingImage}
+            />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
-            <div className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
-              <div className="flex-1 space-y-2">
-                <Label>Push to device</Label>
-                <Select value={assignDeviceId} onValueChange={setAssignDeviceId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a device" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {devices.length === 0 && (
-                      <div className="text-muted-foreground px-2 py-1.5 text-sm">No devices yet</div>
-                    )}
-                    {devices.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleAssign} disabled={!assignDeviceId || assigning} className="gap-2">
-                <Send className="h-4 w-4" />
-                {assigning ? "Pushing..." : "Push"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stacked layout on narrow screens, where draggable dividers don't apply */}
+      <div className="space-y-4 lg:hidden">
+        <PreviewPanel
+          scene={scene}
+          elements={elements}
+          selectedIndex={selectedIndex}
+          onSelect={setSelectedIndex}
+          onDragElement={(x, y) => {
+            if (selectedIndex != null) updateElement(selectedIndex, { x, y })
+          }}
+          devices={devices}
+          assignDeviceId={assignDeviceId}
+          setAssignDeviceId={setAssignDeviceId}
+          assigning={assigning}
+          onAssign={handleAssign}
+        />
+        <ElementsPanel
+          elements={elements}
+          selectedIndex={selectedIndex}
+          onSelect={setSelectedIndex}
+          onAdd={addElement}
+          onReorder={reorderElements}
+          onBringToFront={bringToFront}
+          onSendToBack={sendToBack}
+        />
+        <PropertiesPanel
+          selected={selected}
+          selectedIndex={selectedIndex}
+          updateElement={updateElement}
+          removeElement={removeElement}
+          uploadingImage={uploadingImage}
+          setUploadingImage={setUploadingImage}
+        />
+      </div>
+    </div>
+  )
+}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Elements</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Select onValueChange={(v) => addElement(v as SceneElement["type"])} value="">
+function PreviewPanel({
+  scene,
+  elements,
+  selectedIndex,
+  onSelect,
+  onDragElement,
+  devices,
+  assignDeviceId,
+  setAssignDeviceId,
+  assigning,
+  onAssign,
+}: {
+  scene: Scene
+  elements: SceneElement[]
+  selectedIndex: number | null
+  onSelect: (index: number | null) => void
+  onDragElement: (x: number, y: number) => void
+  devices: Device[]
+  assignDeviceId: string
+  setAssignDeviceId: (id: string) => void
+  assigning: boolean
+  onAssign: () => void
+}) {
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Live Preview</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <SceneCanvasPreview
+          scene={scene}
+          elements={elements}
+          selectedIndex={selectedIndex}
+          onSelect={onSelect}
+          onDragElement={onDragElement}
+        />
+
+        <div className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
+          <div className="flex-1 space-y-2">
+            <Label>Push to device</Label>
+            <Select value={assignDeviceId} onValueChange={setAssignDeviceId}>
               <SelectTrigger>
-                <SelectValue placeholder="+ Add element" />
+                <SelectValue placeholder="Choose a device" />
               </SelectTrigger>
               <SelectContent>
-                {ELEMENT_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {ELEMENT_TYPE_META[t].label}
+                {devices.length === 0 && <div className="text-muted-foreground px-2 py-1.5 text-sm">No devices yet</div>}
+                {devices.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <Button onClick={onAssign} disabled={!assignDeviceId || assigning} className="gap-2">
+            <Send className="h-4 w-4" />
+            {assigning ? "Pushing..." : "Push"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
-            <div className="space-y-1">
-              {elements.length === 0 && <p className="text-muted-foreground text-sm">No elements yet.</p>}
-              {elements.map((el, i) => {
-                const meta = ELEMENT_TYPE_META[el.type]
-                const Icon = meta.icon
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedIndex(i)}
-                    className={`flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left text-sm transition-colors ${
-                      selectedIndex === i ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
-                      {meta.label}
-                      {el.type === "text" || el.type === "scrollText" ? `: ${el.text}` : ""}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+function SortableElementRow({
+  index,
+  element,
+  selected,
+  onSelect,
+  onBringToFront,
+  onSendToBack,
+  isLast,
+  isFirst,
+}: {
+  index: number
+  element: SceneElement
+  selected: boolean
+  onSelect: () => void
+  onBringToFront: () => void
+  onSendToBack: () => void
+  isLast: boolean
+  isFirst: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: index })
+  const meta = ELEMENT_TYPE_META[element.type]
+  const Icon = meta.icon
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selected == null || selectedIndex == null ? (
-              <p className="text-muted-foreground text-sm">Select an element to edit it.</p>
-            ) : (
-              <ElementProperties
-                element={selected}
-                onChange={(patch) => updateElement(selectedIndex, patch)}
-                onDelete={() => removeElement(selectedIndex)}
-                uploadingImage={uploadingImage}
-                onUploadImage={async (file) => {
-                  if (selected.type !== "image") return
-                  setUploadingImage(true)
-                  const url = await uploadImageAsRaw(file, selected.width, selected.height)
-                  setUploadingImage(false)
-                  if (url) updateElement(selectedIndex, { url })
-                }}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      className={`flex items-center gap-1 rounded-md border px-1.5 py-1 transition-colors ${
+        selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+      }`}
+    >
+      <button
+        type="button"
+        className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        aria-label={`Reorder ${meta.label}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <button onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm">
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="truncate">
+          {meta.label}
+          {element.type === "text" || element.type === "scrollText" ? `: ${element.text}` : ""}
+        </span>
+      </button>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        onClick={onBringToFront}
+        disabled={isLast}
+        aria-label="Bring to front"
+        title="Bring to front"
+      >
+        <ChevronsUp className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        size="icon-sm"
+        variant="ghost"
+        onClick={onSendToBack}
+        disabled={isFirst}
+        aria-label="Send to back"
+        title="Send to back"
+      >
+        <ChevronsDown className="h-3.5 w-3.5" />
+      </Button>
     </div>
+  )
+}
+
+function ElementsPanel({
+  elements,
+  selectedIndex,
+  onSelect,
+  onAdd,
+  onReorder,
+  onBringToFront,
+  onSendToBack,
+}: {
+  elements: SceneElement[]
+  selectedIndex: number | null
+  onSelect: (index: number) => void
+  onAdd: (type: SceneElement["type"]) => void
+  onReorder: (from: number, to: number) => void
+  onBringToFront: (index: number) => void
+  onSendToBack: (index: number) => void
+}) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Elements</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Select onValueChange={(v) => onAdd(v as SceneElement["type"])} value="">
+          <SelectTrigger>
+            <SelectValue placeholder="+ Add element" />
+          </SelectTrigger>
+          <SelectContent>
+            {ELEMENT_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {ELEMENT_TYPE_META[t].label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {elements.length === 0 ? (
+          <p className="text-muted-foreground text-sm">No elements yet.</p>
+        ) : (
+          <>
+            <p className="text-muted-foreground text-xs">Later items draw on top. Drag to restack.</p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={({ active, over }) => {
+                if (over && active.id !== over.id) onReorder(Number(active.id), Number(over.id))
+              }}
+            >
+              <SortableContext items={elements.map((_, i) => i)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {elements.map((el, i) => (
+                    <SortableElementRow
+                      key={i}
+                      index={i}
+                      element={el}
+                      selected={selectedIndex === i}
+                      onSelect={() => onSelect(i)}
+                      onBringToFront={() => onBringToFront(i)}
+                      onSendToBack={() => onSendToBack(i)}
+                      isFirst={i === 0}
+                      isLast={i === elements.length - 1}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function PropertiesPanel({
+  selected,
+  selectedIndex,
+  updateElement,
+  removeElement,
+  uploadingImage,
+  setUploadingImage,
+}: {
+  selected: SceneElement | null
+  selectedIndex: number | null
+  updateElement: (index: number, patch: Partial<SceneElement>) => void
+  removeElement: (index: number) => void
+  uploadingImage: boolean
+  setUploadingImage: (v: boolean) => void
+}) {
+  return (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Properties</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {selected == null || selectedIndex == null ? (
+          <p className="text-muted-foreground text-sm">Select an element to edit it.</p>
+        ) : (
+          <ElementProperties
+            element={selected}
+            onChange={(patch) => updateElement(selectedIndex, patch)}
+            onDelete={() => removeElement(selectedIndex)}
+            uploadingImage={uploadingImage}
+            onUploadImage={async (file) => {
+              if (selected.type !== "image") return
+              setUploadingImage(true)
+              const url = await uploadImageAsRaw(file, selected.width, selected.height)
+              setUploadingImage(false)
+              if (url) updateElement(selectedIndex, { url })
+            }}
+          />
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -558,17 +886,23 @@ function ElementProperties({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <Label>X</Label>
+          <Label className="gap-1.5">
+            Horizontal position
+            <HelpTip>Pixels from the left edge of the panel. 0 is flush against the left.</HelpTip>
+          </Label>
           <Input type="number" value={element.x} onChange={(e) => onChange({ x: Number(e.target.value) })} />
         </div>
         <div className="space-y-1">
-          <Label>Y</Label>
+          <Label className="gap-1.5">
+            Vertical position
+            <HelpTip>Pixels from the top edge of the panel. 0 is flush against the top.</HelpTip>
+          </Label>
           <Input type="number" value={element.y} onChange={(e) => onChange({ y: Number(e.target.value) })} />
         </div>
       </div>
 
       <div className="space-y-1">
-        <Label>Color</Label>
+        <Label>Colour</Label>
         <div className="flex gap-2">
           <input
             type="color"
@@ -596,7 +930,13 @@ function ElementProperties({
             <Input value={element.text} onChange={(e) => onChange({ text: e.target.value })} />
           </div>
           <div className="space-y-1">
-            <Label>Size</Label>
+            <Label className="gap-1.5">
+              Text size
+              <HelpTip>
+                A multiplier, not a pixel value. Each step is 8 pixels tall, so {element.size} renders at{" "}
+                {element.size * 8}px.
+              </HelpTip>
+            </Label>
             <Input
               type="number"
               min={1}
@@ -604,6 +944,7 @@ function ElementProperties({
               value={element.size}
               onChange={(e) => onChange({ size: Number(e.target.value) })}
             />
+            <p className="text-muted-foreground text-xs">{element.size * 8}px tall</p>
           </div>
         </>
       )}
@@ -629,11 +970,21 @@ function ElementProperties({
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Width</Label>
+              <Label className="gap-1.5">
+                Width
+                <HelpTip>
+                  Pixel width the image is resized to when uploaded. Change this before uploading, not after.
+                </HelpTip>
+              </Label>
               <Input type="number" value={element.width} onChange={(e) => onChange({ width: Number(e.target.value) })} />
             </div>
             <div className="space-y-1">
-              <Label>Height</Label>
+              <Label className="gap-1.5">
+                Height
+                <HelpTip>
+                  Pixel height the image is resized to when uploaded. Change this before uploading, not after.
+                </HelpTip>
+              </Label>
               <Input type="number" value={element.height} onChange={(e) => onChange({ height: Number(e.target.value) })} />
             </div>
           </div>
@@ -642,7 +993,10 @@ function ElementProperties({
 
       {element.type === "clock" && (
         <div className="space-y-1">
-          <Label>Format</Label>
+          <Label className="gap-1.5">
+            Time format
+            <HelpTip>Uses the device&apos;s configured timezone, not your browser&apos;s.</HelpTip>
+          </Label>
           <Select value={element.format} onValueChange={(v) => onChange({ format: v as "HH:mm" | "HH:mm:ss" })}>
             <SelectTrigger>
               <SelectValue />
@@ -658,11 +1012,17 @@ function ElementProperties({
       {element.type === "weather" && (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label>Latitude</Label>
+            <Label className="gap-1.5">
+              Latitude
+              <HelpTip>Location the temperature is fetched for. Positive is north of the equator.</HelpTip>
+            </Label>
             <Input type="number" step="0.01" value={element.lat} onChange={(e) => onChange({ lat: Number(e.target.value) })} />
           </div>
           <div className="space-y-1">
-            <Label>Longitude</Label>
+            <Label className="gap-1.5">
+              Longitude
+              <HelpTip>Location the temperature is fetched for. Positive is east of Greenwich.</HelpTip>
+            </Label>
             <Input type="number" step="0.01" value={element.lon} onChange={(e) => onChange({ lon: Number(e.target.value) })} />
           </div>
         </div>
@@ -686,7 +1046,13 @@ function ElementProperties({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label>Scale</Label>
+            <Label className="gap-1.5">
+              Icon size
+              <HelpTip>
+                Icons are a 16x16 grid scaled by this number, so {element.scale} renders at {element.scale * 16}px
+                square.
+              </HelpTip>
+            </Label>
             <Input
               type="number"
               min={1}
@@ -694,12 +1060,16 @@ function ElementProperties({
               value={element.scale}
               onChange={(e) => onChange({ scale: Number(e.target.value) })}
             />
+            <p className="text-muted-foreground text-xs">{element.scale * 16}px square</p>
           </div>
         </div>
       )}
 
       <div className="space-y-2 border-t border-border pt-4">
-        <Label>Animation</Label>
+        <Label className="gap-1.5">
+          Animation
+          <HelpTip>Every animation works on every element type, including images and icons.</HelpTip>
+        </Label>
         <Select
           value={element.animation.type}
           onValueChange={(v) => onChange({ animation: { ...element.animation, type: v as SceneElement["animation"]["type"] } })}
@@ -717,12 +1087,18 @@ function ElementProperties({
           </SelectContent>
         </Select>
         {element.animation.type !== "none" && (
-          <Input
-            type="number"
-            placeholder="Speed"
-            value={element.animation.speed}
-            onChange={(e) => onChange({ animation: { ...element.animation, speed: Number(e.target.value) } })}
-          />
+          <>
+            <Label className="gap-1.5">
+              Speed
+              <HelpTip>{ANIMATION_SPEED_HELP[element.animation.type]}</HelpTip>
+            </Label>
+            <Input
+              type="number"
+              placeholder="Speed"
+              value={element.animation.speed}
+              onChange={(e) => onChange({ animation: { ...element.animation, speed: Number(e.target.value) } })}
+            />
+          </>
         )}
       </div>
 
@@ -743,17 +1119,21 @@ function SceneCanvasPreview({
   scene,
   elements,
   selectedIndex,
+  onSelect,
   onDragElement,
 }: {
   scene: Scene
   elements: SceneElement[]
   selectedIndex: number | null
+  onSelect: (index: number | null) => void
   onDragElement: (x: number, y: number) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const runtimeRef = useRef<AnimRuntime[]>(createRuntimeState(elements.length))
   const cachesRef = useRef<RenderCaches>({ images: new Map(), weather: new Map() })
   const draggingRef = useRef(false)
+  const [fitToPanel, setFitToPanel] = useState(true)
+  const [zoom, setZoom] = useState(4)
 
   useEffect(() => {
     if (runtimeRef.current.length !== elements.length) {
@@ -776,44 +1156,107 @@ function SceneCanvasPreview({
     return () => cancelAnimationFrame(rafId)
   }, [elements, scene.panel_width, scene.panel_height])
 
-  const handlePointer = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (selectedIndex == null) return
+  const toScenePoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) return null
     const rect = canvas.getBoundingClientRect()
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * canvas.width)
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * canvas.height)
-    onDragElement(x, y)
+    return {
+      x: Math.round(((e.clientX - rect.left) / rect.width) * canvas.width),
+      y: Math.round(((e.clientY - rect.top) / rect.height) * canvas.height),
+    }
+  }
+
+  // Topmost element wins, matching paint order (later elements draw on top).
+  const hitTest = (x: number, y: number): number | null => {
+    const ctx = canvasRef.current?.getContext("2d")
+    if (!ctx) return null
+    for (let i = elements.length - 1; i >= 0; i--) {
+      const el = elements[i]
+      if (el.visible === false) continue
+      const b = elementBounds(ctx, el)
+      if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) return i
+    }
+    return null
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const point = toScenePoint(e)
+    if (!point) return
+    const hit = hitTest(point.x, point.y)
+    if (hit != null) {
+      onSelect(hit)
+      draggingRef.current = true
+      return
+    }
+    // Clicking empty canvas with something selected moves it there, matching
+    // the previous drag-to-reposition behaviour.
+    if (selectedIndex != null) {
+      draggingRef.current = true
+      onDragElement(point.x, point.y)
+    } else {
+      onSelect(null)
+    }
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!draggingRef.current || selectedIndex == null) return
+    const point = toScenePoint(e)
+    if (point) onDragElement(point.x, point.y)
   }
 
   return (
-    <div className="flex items-center justify-center rounded-lg bg-black p-4">
-      <canvas
-        ref={canvasRef}
-        width={scene.panel_width}
-        height={scene.panel_height}
-        onPointerDown={(e) => {
-          draggingRef.current = true
-          handlePointer(e)
-        }}
-        onPointerMove={(e) => {
-          if (draggingRef.current) handlePointer(e)
-        }}
-        onPointerUp={() => {
-          draggingRef.current = false
-        }}
-        onPointerLeave={() => {
-          draggingRef.current = false
-        }}
-        style={{
-          width: "100%",
-          maxWidth: 400,
-          aspectRatio: `${scene.panel_width} / ${scene.panel_height}`,
-          imageRendering: "pixelated",
-          cursor: selectedIndex != null ? "move" : "default",
-          touchAction: "none",
-        }}
-      />
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Switch checked={fitToPanel} onCheckedChange={setFitToPanel} />
+          Fit to panel
+        </label>
+        {!fitToPanel && (
+          <div className="flex min-w-40 flex-1 items-center gap-2">
+            <ZoomIn className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Slider min={1} max={16} step={1} value={[zoom]} onValueChange={([v]) => setZoom(v)} />
+            <span className="w-8 shrink-0 font-mono text-xs text-muted-foreground">{zoom}x</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex max-h-[60vh] items-center justify-center overflow-auto rounded-lg bg-black p-4">
+        <canvas
+          ref={canvasRef}
+          width={scene.panel_width}
+          height={scene.panel_height}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={() => {
+            draggingRef.current = false
+          }}
+          onPointerLeave={() => {
+            draggingRef.current = false
+          }}
+          style={
+            fitToPanel
+              ? {
+                  width: "100%",
+                  aspectRatio: `${scene.panel_width} / ${scene.panel_height}`,
+                  imageRendering: "pixelated",
+                  cursor: "pointer",
+                  touchAction: "none",
+                }
+              : {
+                  width: scene.panel_width * zoom,
+                  height: scene.panel_height * zoom,
+                  flexShrink: 0,
+                  imageRendering: "pixelated",
+                  cursor: "pointer",
+                  touchAction: "none",
+                }
+          }
+        />
+      </div>
+
+      <p className="text-muted-foreground text-xs">
+        Click an element on the canvas to select it, then drag to reposition.
+      </p>
     </div>
   )
 }

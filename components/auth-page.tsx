@@ -43,14 +43,14 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+    <div className="gradient-mesh flex min-h-screen items-center justify-center p-4">
+      <Card className="animate-scale-in glass-card w-full max-w-md">
         <div className="p-8">
           <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60">
+            <div className="glow-primary mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-secondary-accent to-tertiary-accent">
               <Zap className="h-7 w-7 text-primary-foreground" />
             </div>
-            <h1 className="mb-2 text-2xl font-bold">Smart RGB Display</h1>
+            <h1 className="font-heading mb-2 text-2xl font-bold text-gradient-brand">Smart RGB Display</h1>
             <p className="text-muted-foreground text-sm">Control your LED displays with ease</p>
           </div>
 

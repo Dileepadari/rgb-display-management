@@ -21,7 +21,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Plus, Trash2, Wifi, WifiOff, Sparkles, Settings2 } from "lucide-react"
+import { Plus, Trash2, Wifi, WifiOff, Sparkles, Settings2, ChevronDown } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import useSWR from "swr"
 
 interface Device {
@@ -457,24 +458,32 @@ function DeviceConfigDialog({
             Total resolution: {form.panel_cols * form.panel_unit_size} x {form.panel_rows * form.panel_unit_size} pixels
           </p>
 
-          <div className="space-y-3 border-t border-border pt-4">
-            <Label>ThingSpeak channel (this device&apos;s dedicated trigger channel)</Label>
-            <Input
-              placeholder="Channel ID"
-              value={form.thingspeak_channel_id}
-              onChange={(e) => setForm({ ...form, thingspeak_channel_id: e.target.value })}
-            />
-            <Input
-              placeholder="Read API key"
-              value={form.thingspeak_read_key}
-              onChange={(e) => setForm({ ...form, thingspeak_read_key: e.target.value })}
-            />
-            <Input
-              placeholder="Write API key"
-              value={form.thingspeak_write_key}
-              onChange={(e) => setForm({ ...form, thingspeak_write_key: e.target.value })}
-            />
-          </div>
+          <Collapsible className="border-t border-border pt-4">
+            <CollapsibleTrigger className="group flex w-full items-center justify-between text-sm font-medium">
+              ThingSpeak channel
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 pt-3">
+              <p className="text-muted-foreground text-xs">
+                This device&apos;s dedicated trigger channel. Must match the keys flashed to the ESP32.
+              </p>
+              <Input
+                placeholder="Channel ID"
+                value={form.thingspeak_channel_id}
+                onChange={(e) => setForm({ ...form, thingspeak_channel_id: e.target.value })}
+              />
+              <Input
+                placeholder="Read API key"
+                value={form.thingspeak_read_key}
+                onChange={(e) => setForm({ ...form, thingspeak_read_key: e.target.value })}
+              />
+              <Input
+                placeholder="Write API key"
+                value={form.thingspeak_write_key}
+                onChange={(e) => setForm({ ...form, thingspeak_write_key: e.target.value })}
+              />
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         <AlertDialogFooter className="flex-row items-center !justify-between sm:justify-between">
