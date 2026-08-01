@@ -3,27 +3,59 @@
 import type React from "react"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Play, Pause } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Plus, Trash2, Play, Pause, Send, ArrowUp, ArrowDown } from "lucide-react"
 import useSWR from "swr"
+import type { PlaylistItem } from "@/lib/playlist-schema"
 
 interface Playlist {
   id: string
   name: string
   description: string
-  scenes: string[]
+  scenes: PlaylistItem[]
   is_active: boolean
   loop: boolean
   shuffle: boolean
 }
 
+interface Scene {
+  id: string
+  name: string
+}
+
+interface Device {
+  id: string
+  name: string
+}
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
 export function PlaylistManagerComplete() {
-  const { data: playlists, mutate } = useSWR<Playlist[]>("/api/playlists", fetcher)
+  const { data: playlists, isLoading, mutate } = useSWR<Playlist[]>("/api/playlists", fetcher)
+  const { data: allScenes } = useSWR<Scene[]>("/api/scenes", fetcher)
+  // "__"-prefixed scenes are auto-managed (e.g. the Devices page's Identify
+  // test pattern) — not something the user should be able to add to a playlist.
+  const scenes = allScenes?.filter((s) => !s.name.startsWith("__"))
+  const { data: devices } = useSWR<Device[]>("/api/devices", fetcher)
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -32,12 +64,10 @@ export function PlaylistManagerComplete() {
     shuffle: false,
   })
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleCreatePlaylist = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
 
     try {
       const response = await fetch("/api/playlists", {
@@ -51,22 +81,23 @@ export function PlaylistManagerComplete() {
       await mutate()
       setFormData({ name: "", description: "", loop: true, shuffle: false })
       setShowForm(false)
+      toast.success("Playlist created")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error creating playlist")
+      toast.error(err instanceof Error ? err.message : "Error creating playlist")
     } finally {
       setLoading(false)
     }
   }
 
   const handleDeletePlaylist = async (id: string) => {
-    if (!confirm("Are you sure?")) return
-
     try {
       const response = await fetch(`/api/playlists/${id}`, { method: "DELETE" })
       if (!response.ok) throw new Error("Failed to delete playlist")
       await mutate()
+      if (selectedPlaylist?.id === id) setSelectedPlaylist(null)
+      toast.success("Playlist deleted")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error deleting playlist")
+      toast.error(err instanceof Error ? err.message : "Error deleting playlist")
     }
   }
 
@@ -80,16 +111,19 @@ export function PlaylistManagerComplete() {
       if (!response.ok) throw new Error("Failed to toggle playlist")
       await mutate()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error toggling playlist")
+      toast.error(err instanceof Error ? err.message : "Error toggling playlist")
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Playlist Manager</h2>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Playlist Manager</h2>
+          <p className="text-muted-foreground text-sm">Rotate scenes automatically across your displays</p>
+        </div>
         <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="w-4 h-4" />
+          <Plus className="h-4 w-4" />
           Create Playlist
         </Button>
       </div>
@@ -101,44 +135,43 @@ export function PlaylistManagerComplete() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreatePlaylist} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Playlist Name</Label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="playlist-name">Playlist Name</Label>
                   <Input
+                    id="playlist-name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="My Playlist"
                     required
                   />
                 </div>
-                <div>
-                  <Label>Description</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="playlist-description">Description</Label>
                   <Input
+                    id="playlist-description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Playlist description"
                   />
                 </div>
               </div>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch
                     checked={formData.loop}
-                    onChange={(e) => setFormData({ ...formData, loop: e.target.checked })}
+                    onCheckedChange={(checked) => setFormData({ ...formData, loop: checked })}
                   />
                   Loop
                 </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch
                     checked={formData.shuffle}
-                    onChange={(e) => setFormData({ ...formData, shuffle: e.target.checked })}
+                    onCheckedChange={(checked) => setFormData({ ...formData, shuffle: checked })}
                   />
                   Shuffle
                 </label>
               </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
               <div className="flex gap-2">
                 <Button type="submit" disabled={loading}>
                   {loading ? "Creating..." : "Create Playlist"}
@@ -152,37 +185,256 @@ export function PlaylistManagerComplete() {
         </Card>
       )}
 
-      <div className="grid gap-4">
-        {(Array.isArray(playlists) ? playlists : [])?.map((playlist) => (
-          <Card key={playlist.id}>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{playlist.name}</h3>
-                  <p className="text-sm text-gray-500">{playlist.description}</p>
-                  <div className="flex gap-4 mt-2 text-sm">
-                    <span>{playlist.scenes.length} scenes</span>
-                    <span>{playlist.loop ? "Loop: On" : "Loop: Off"}</span>
-                    <span>{playlist.shuffle ? "Shuffle: On" : "Shuffle: Off"}</span>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid gap-4">
+          {!isLoading && (!playlists || playlists.length === 0) && (
+            <p className="text-muted-foreground text-sm">No playlists yet. Create one to get started.</p>
+          )}
+          {(Array.isArray(playlists) ? playlists : [])?.map((playlist) => (
+            <Card
+              key={playlist.id}
+              className={`cursor-pointer transition ${selectedPlaylist?.id === playlist.id ? "ring-2 ring-primary" : ""}`}
+              onClick={() => setSelectedPlaylist(playlist)}
+            >
+              <CardContent className="pt-6">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold">{playlist.name}</h3>
+                      {playlist.is_active && (
+                        <Badge variant="outline" className="border-success/30 bg-success/10 text-success">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground text-sm">{playlist.description}</p>
+                    <div className="text-muted-foreground mt-2 flex gap-4 text-sm">
+                      <span>{playlist.scenes?.length ?? 0} scenes</span>
+                      <span>{playlist.loop ? "Loop: On" : "Loop: Off"}</span>
+                      <span>{playlist.shuffle ? "Shuffle: On" : "Shuffle: Off"}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant={playlist.is_active ? "default" : "outline"}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleTogglePlaylist(playlist.id, playlist.is_active)
+                      }}
+                    >
+                      {playlist.is_active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive" onClick={(e) => e.stopPropagation()}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete {playlist.name}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This playlist will be permanently deleted. This can&apos;t be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-white hover:bg-destructive/90"
+                            onClick={() => handleDeletePlaylist(playlist.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant={playlist.is_active ? "default" : "outline"}
-                    onClick={() => handleTogglePlaylist(playlist.id, playlist.is_active)}
-                  >
-                    {playlist.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDeletePlaylist(playlist.id)}>
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {selectedPlaylist && (
+          <PlaylistItemsEditor
+            key={selectedPlaylist.id}
+            playlist={selectedPlaylist}
+            scenes={Array.isArray(scenes) ? scenes : []}
+            devices={Array.isArray(devices) ? devices : []}
+            onSaved={async (updated) => {
+              await mutate()
+              setSelectedPlaylist(updated)
+            }}
+          />
+        )}
       </div>
     </div>
+  )
+}
+
+function PlaylistItemsEditor({
+  playlist,
+  scenes,
+  devices,
+  onSaved,
+}: {
+  playlist: Playlist
+  scenes: Scene[]
+  devices: Device[]
+  onSaved: (playlist: Playlist) => void
+}) {
+  const [items, setItems] = useState<PlaylistItem[]>(playlist.scenes ?? [])
+  const [addSceneId, setAddSceneId] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [assignDeviceId, setAssignDeviceId] = useState("")
+  const [assigning, setAssigning] = useState(false)
+
+  const dirty = JSON.stringify(items) !== JSON.stringify(playlist.scenes ?? [])
+  const sceneName = (id: string) => scenes.find((s) => s.id === id)?.name ?? "Unknown scene"
+
+  const addItem = () => {
+    if (!addSceneId) return
+    setItems((prev) => [...prev, { scene_id: addSceneId, duration_seconds: 10 }])
+    setAddSceneId("")
+  }
+
+  const updateDuration = (index: number, duration_seconds: number) => {
+    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, duration_seconds } : it)))
+  }
+
+  const removeItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const moveItem = (index: number, dir: -1 | 1) => {
+    setItems((prev) => {
+      const next = [...prev]
+      const target = index + dir
+      if (target < 0 || target >= next.length) return prev
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/playlists/${playlist.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scenes: items }),
+      })
+      if (!res.ok) throw new Error("Failed to save playlist")
+      const updated = await res.json()
+      onSaved(updated)
+      toast.success("Playlist saved")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error saving playlist")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAssign = async () => {
+    if (!assignDeviceId) return
+    setAssigning(true)
+    try {
+      const res = await fetch(`/api/devices/${assignDeviceId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target_type: "playlist", playlist_id: playlist.id }),
+      })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.error ?? "Failed to assign playlist")
+      if (body.warning) toast.warning(body.warning)
+      else toast.success("Pushed to device")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error assigning playlist")
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  return (
+    <Card className="h-fit">
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-lg">Editing: {playlist.name}</CardTitle>
+        <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Select value={addSceneId} onValueChange={setAddSceneId}>
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Choose a scene to add" />
+            </SelectTrigger>
+            <SelectContent>
+              {scenes.length === 0 && <div className="text-muted-foreground px-2 py-1.5 text-sm">No scenes yet</div>}
+              {scenes.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={addItem} disabled={!addSceneId} variant="outline" className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add
+          </Button>
+        </div>
+
+        <div className="space-y-2">
+          {items.length === 0 && <p className="text-muted-foreground text-sm">No scenes in this playlist yet.</p>}
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-md border border-border p-2">
+              <span className="text-muted-foreground w-5 text-center text-xs">{i + 1}</span>
+              <span className="flex-1 truncate text-sm">{sceneName(item.scene_id)}</span>
+              <Input
+                type="number"
+                min={1}
+                value={item.duration_seconds}
+                onChange={(e) => updateDuration(i, Number(e.target.value))}
+                className="w-20"
+              />
+              <span className="text-muted-foreground text-xs">sec</span>
+              <Button size="icon-sm" variant="ghost" onClick={() => moveItem(i, -1)} disabled={i === 0}>
+                <ArrowUp className="h-4 w-4" />
+              </Button>
+              <Button size="icon-sm" variant="ghost" onClick={() => moveItem(i, 1)} disabled={i === items.length - 1}>
+                <ArrowDown className="h-4 w-4" />
+              </Button>
+              <Button size="icon-sm" variant="ghost" onClick={() => removeItem(i)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
+          <div className="flex-1 space-y-2">
+            <Label>Push to device</Label>
+            <Select value={assignDeviceId} onValueChange={setAssignDeviceId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a device" />
+              </SelectTrigger>
+              <SelectContent>
+                {devices.length === 0 && <div className="text-muted-foreground px-2 py-1.5 text-sm">No devices yet</div>}
+                {devices.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={handleAssign} disabled={!assignDeviceId || assigning} className="gap-2">
+            <Send className="h-4 w-4" />
+            {assigning ? "Pushing..." : "Push"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

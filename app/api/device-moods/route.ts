@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+
+const createDeviceMoodSchema = z.object({
+  device_id: z.string().min(1),
+  mood_id: z.string().min(1),
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,12 +19,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    const parsed = createDeviceMoodSchema.safeParse(body)
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.format() }, { status: 400 })
 
     const { data, error } = await supabase
       .from("device_moods")
       .insert({
         user_id: user.id,
-        ...body,
+        ...parsed.data,
       })
       .select()
 
