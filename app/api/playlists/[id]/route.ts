@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from 'zod'
-import { playlistItemSchema } from "@/lib/playlist-schema"
+import { playlistItemsSchema } from "@/lib/playlist-schema"
 
-const updatePlaylistSchema = z.object({ name: z.string().optional(), description: z.string().optional(), scenes: z.array(playlistItemSchema).max(20).optional(), loop: z.boolean().optional(), shuffle: z.boolean().optional() })
+const updatePlaylistSchema = z.object({ name: z.string().optional(), description: z.string().optional(), scenes: playlistItemsSchema.optional(), loop: z.boolean().optional(), shuffle: z.boolean().optional() })
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {

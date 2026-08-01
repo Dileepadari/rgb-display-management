@@ -117,6 +117,38 @@ is assigned to this device within ~10s of it appearing in the web app.
    button there to push a test pattern and confirm the new arrangement renders
    correctly before assigning a real scene.
 
+## 7. What the panel does on its own
+
+Everything below runs on the ESP32 with no help from the website. The site is
+for authoring; once content is fetched, unplugging your computer changes
+nothing.
+
+| Feature | Where it comes from |
+| --- | --- |
+| Text, scrolling text, images, icons, characters | Scene elements in the feed |
+| Clock | The chip's own NTP-synced time |
+| Weather | The device fetches Open-Meteo directly, ~every 15 min |
+| Animations (scroll/blink/pulse/rainbow/bounce) | Ticked locally each frame |
+| Playlist rotation, loop, shuffle | Local timers; the whole playlist is cached |
+| Mood reactions (enter → emote → stay/leave) | Cached with the content, timed locally |
+| Brightness, timezone | Sent with the feed — **no reflash needed to change these** |
+
+Brightness and timezone are edited on the web app's Devices page and travel
+with the content. Panel *arrangement* is the exception: it is a compile-time
+constant (step 3) because the display driver needs it before any network
+traffic happens.
+
+### Timezone format
+
+The web app stores **POSIX TZ strings**, not IANA names, because the ESP32 has
+no tzdata to resolve `Asia/Kolkata` with. `IST-5:30` and
+`GMT0BST,M3.5.0/1,M10.5.0` are the sort of thing it expects — the offset sign
+is inverted by the POSIX spec, and the trailing rule is what gives you
+automatic daylight saving. Picking a zone in the Devices dialog sets this for
+you; the list lives in `lib/timezones.ts`. If an IANA name reaches the device
+it logs a warning and falls back to the compile-time offset rather than
+silently showing the wrong time.
+
 ## Troubleshooting
 
 - **Nothing lights up at all**: check 5V power to the panels (a fully-lit
@@ -136,3 +168,29 @@ is assigned to this device within ~10s of it appearing in the web app.
 - **Serial monitor shows `[main] device-feed fetch failed`**: double check
   `BACKEND_BASE_URL` is reachable from the ESP32's network and
   `DEVICE_API_TOKEN` matches what's in the web app for this device.
+- **Clock shows nothing**: the panel needs NTP before it can draw a time. It
+  reconfigures time on every WiFi (re)connect, so this usually means WiFi
+  never came up — check the serial log for `WiFi up, (re)configuring time`.
+- **Clock is off by hours**: the timezone is a POSIX TZ string, not an IANA
+  name (see step 7). A warning in the serial log names the offending value.
+- **Panel is too bright / too dim**: brightness comes from the web app now.
+  Change it on the Devices page and push any scene — no reflash.
+- **Playlist plays fewer scenes than the editor shows**: the firmware caches
+  the whole playlist in RAM, so it is capped at `MAX_PLAYLIST_ITEMS` (12). The
+  web editor enforces the same cap, so this should no longer be reachable — if
+  you see it, the two have drifted and `scripts/firmware-parity.test.ts` will
+  say so.
+
+## Keeping the firmware and website in step
+
+Two implementations of the same feature set drift silently, and a drift only
+shows up on real hardware. Two guards exist:
+
+- `scripts/characters-header.test.ts` fails if `include/characters.h` is stale
+  relative to `lib/character-sprites.ts`. Regenerate with
+  `npx vite-node scripts/generate-characters-header.ts`.
+- `scripts/firmware-parity.test.ts` reads the firmware sources and fails if the
+  website can produce something the panel cannot render — a new element type,
+  animation, character, emote, mood entrance, or a capacity mismatch.
+
+Run both with `npx vitest run` from the repo root before flashing.

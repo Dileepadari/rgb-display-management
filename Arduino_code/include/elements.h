@@ -26,7 +26,10 @@
 #include <Adafruit_GFX.h>
 
 #define MAX_ELEMENTS 12
-#define MAX_PLAYLIST_ITEMS 6
+// The web app caps a playlist at this many items (lib/playlist-schema.ts) so
+// the two agree — a playlist that parses here but got truncated would rotate
+// through fewer scenes than the editor showed, silently.
+#define MAX_PLAYLIST_ITEMS 12
 
 // If you enlarge these, re-check free heap (Serial prints it every heartbeat)
 // - a plain ESP32 WROOM has ~320KB RAM total, shared with WiFi/TLS buffers
@@ -93,10 +96,21 @@ struct Playlist {
   PlaylistItem items[MAX_PLAYLIST_ITEMS];
 };
 
+// Settings that live in the web UI rather than in firmware, so they arrive
+// with the content instead of needing a reflash to change.
+struct DeviceSettings {
+  uint8_t brightness = 100;   // 0-100 as shown in the UI
+  String timezone = "UTC";    // IANA name, e.g. "Asia/Kolkata"
+  uint8_t panelCols = 1;
+  uint8_t panelRows = 1;
+  uint16_t panelUnitSize = 64;
+};
+
 struct DeviceFeed {
   bool valid = false;
   bool isPlaylist = false;
   uint32_t revision = 0;
+  DeviceSettings settings;
   Scene scene;
   Playlist playlist;
   // A mood reaction composited over whatever the scene/playlist is showing.

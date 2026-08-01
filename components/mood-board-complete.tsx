@@ -434,7 +434,13 @@ export function MoodBoardComplete() {
 
               <div className="space-y-2">
                 <Label>Live preview</Label>
-                <MoodReactionPreview reaction={formReaction} px={200} scene={referenceScene} />
+                <MoodReactionPreview
+                  reaction={formReaction}
+                  px={200}
+                  scene={referenceScene}
+                  panelWidth={referenceScene?.width}
+                  panelHeight={referenceScene?.height}
+                />
                 <p className="text-muted-foreground max-w-[200px] text-xs">
                   {referenceScene
                     ? "Shown over the scene your panel is currently displaying."
@@ -470,7 +476,13 @@ export function MoodBoardComplete() {
                         : "border-border hover:border-primary/50 hover:bg-accent",
                     )}
                   >
-                    <MoodReactionPreview reaction={toReaction(mood)} px={96} scene={referenceScene} />
+                    <MoodReactionPreview
+                      reaction={toReaction(mood)}
+                      px={96}
+                      scene={referenceScene}
+                      panelWidth={referenceScene?.width}
+                      panelHeight={referenceScene?.height}
+                    />
                     <div className="w-full">
                       <p className="truncate text-sm font-medium">{mood.name}</p>
                       <p className="text-muted-foreground truncate text-xs">
@@ -499,7 +511,13 @@ export function MoodBoardComplete() {
             ) : (
               <>
                 <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                  <MoodReactionPreview reaction={toReaction(selectedMood)} px={80} scene={referenceScene} />
+                  <MoodReactionPreview
+                    reaction={toReaction(selectedMood)}
+                    px={80}
+                    scene={referenceScene}
+                    panelWidth={referenceScene?.width}
+                    panelHeight={referenceScene?.height}
+                  />
                   <div className="min-w-0">
                     <p className="truncate font-medium">{selectedMood.name}</p>
                     <p className="text-muted-foreground text-xs">{selectedMood.description}</p>

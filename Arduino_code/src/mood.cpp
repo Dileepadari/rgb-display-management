@@ -186,6 +186,53 @@ static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
   return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
 
+// 4x4 Bayer threshold matrix, normalised to 0..15. Comparing a pixel's
+// position against this gives a stable, evenly-spread subset of pixels for any
+// coverage level — the standard way to fake partial opacity on a display that
+// has none.
+static const uint8_t BAYER_4X4[4][4] = {
+    {0, 8, 2, 10},
+    {12, 4, 14, 6},
+    {3, 11, 1, 9},
+    {15, 7, 13, 5},
+};
+
+// Mirrors drawCharacter() in characters.h, but skips pixels below the opacity
+// threshold. Kept here rather than in the generated header because the header
+// is regenerated from lib/character-sprites.ts and hand edits would be lost.
+static void drawCharacterDithered(Adafruit_GFX &d, const char *characterId, const char *emoteId, int16_t x,
+                                  int16_t y, uint8_t scale, unsigned long elapsedMs, float opacity) {
+  const CharacterDef *c = findCharacter(characterId);
+  if (!c) return;
+  const CharacterEmoteDef *e = findEmote(c, emoteId);
+  if (!e) return;
+  const char *const *frame = e->frames[characterFrameIndex(e->fps, e->frameCount, elapsedMs)];
+
+  const uint8_t level = (uint8_t)(opacity * 16.0f); // 0..16
+
+  for (uint8_t row = 0; row < CHARACTER_GRID_SIZE; row++) {
+    const char *line = frame[row];
+    for (uint8_t col = 0; col < CHARACTER_GRID_SIZE; col++) {
+      const char code = line[col];
+      if (code == '.' || code == '\0') continue;
+      // Threshold against the sprite cell, not the screen pixel, so the whole
+      // cell of a scaled-up sprite is kept or dropped together — otherwise a
+      // scale-4 character dissolves into single pixels instead of fading.
+      if (BAYER_4X4[row & 3][col & 3] >= level) continue;
+
+      for (uint8_t p = 0; p < c->paletteCount; p++) {
+        if (c->palette[p].code != code) continue;
+        if (scale == 1) {
+          d.drawPixel(x + col, y + row, c->palette[p].color);
+        } else {
+          d.fillRect(x + col * scale, y + row * scale, scale, scale, c->palette[p].color);
+        }
+        break;
+      }
+    }
+  }
+}
+
 void renderMood(Adafruit_GFX &display, const Mood &mood, uint16_t panelWidth, uint16_t panelHeight,
                 unsigned long nowMs) {
   if (!mood.active) return;
@@ -203,12 +250,31 @@ void renderMood(Adafruit_GFX &display, const Mood &mood, uint16_t panelWidth, ui
     const uint16_t tint = rgb565(mood.tintR, mood.tintG, mood.tintB);
     // step 2 => every other pixel (~50%), rising to every pixel at 100%.
     const uint8_t step = strength >= 100 ? 1 : (uint8_t)max(2, (int)roundf(100.0f / strength));
-    for (uint16_t y = 0; y < panelHeight; y++) {
-      for (uint16_t x = (y % step); x < panelWidth; x += step) {
-        display.drawPixel(x, y, tint);
+    if (step == 1) {
+      // Fully opaque wash — one fill beats 36k drawPixel calls on a 3x3 wall.
+      display.fillRect(0, 0, panelWidth, panelHeight, tint);
+    } else {
+      // startWrite()/endWrite() lets the driver hold the transaction open
+      // across the whole dither instead of re-entering it per pixel.
+      display.startWrite();
+      for (uint16_t y = 0; y < panelHeight; y++) {
+        for (uint16_t x = (y % step); x < panelWidth; x += step) {
+          display.writePixel(x, y, tint);
+        }
       }
+      display.endWrite();
     }
   }
 
-  drawCharacter(display, mood.character.c_str(), mood.emote.c_str(), s.x, s.y, s.scale, elapsed);
+  // The web preview fades the character in with canvas alpha. There is no
+  // alpha on a HUB75 panel — a pixel is lit or it isn't — so a fade is done as
+  // an ordered dither: at 50% opacity half the pixels are drawn, in a fixed
+  // 4x4 Bayer pattern rather than at random so the sprite doesn't shimmer
+  // between frames. Fully opaque takes the plain path and draws every pixel.
+  if (s.opacity >= 0.999f) {
+    drawCharacter(display, mood.character.c_str(), mood.emote.c_str(), s.x, s.y, s.scale, elapsed);
+  } else if (s.opacity > 0.0f) {
+    drawCharacterDithered(display, mood.character.c_str(), mood.emote.c_str(), s.x, s.y, s.scale, elapsed,
+                          s.opacity);
+  }
 }

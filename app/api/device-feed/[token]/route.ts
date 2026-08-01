@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service"
 import { NextResponse } from "next/server"
+import { toPosixTimezone } from "@/lib/timezones"
 
 // Token-authenticated content feed for the ESP32 (not a Supabase user session
 // - the device can't log in). Returns everything the firmware needs to render
@@ -17,7 +18,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
 
     const { data: device, error: deviceError } = await supabase
       .from("devices")
-      .select("id, current_revision")
+      .select("id, current_revision, brightness, timezone, panel_cols, panel_rows, panel_unit_size")
       .eq("device_api_token", token)
       .single()
 
@@ -33,6 +34,18 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
 
     if (assignmentError || !assignment) {
       return NextResponse.json({ error: "No content assigned to this device yet" }, { status: 404 })
+    }
+
+    // Device-level settings the firmware can't know at flash time. Brightness
+    // and timezone are edited in the web UI, so they have to travel with the
+    // content rather than being compiled in.
+    const device_settings = {
+      brightness: device.brightness ?? 100,
+      // The ESP32 has no tzdata, so this must be a POSIX TZ string.
+      timezone: toPosixTimezone(device.timezone),
+      panel_cols: device.panel_cols ?? 1,
+      panel_rows: device.panel_rows ?? 1,
+      panel_unit_size: device.panel_unit_size ?? 64,
     }
 
     // A mood is a character reaction the panel composites on top of whatever
@@ -78,6 +91,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
       return NextResponse.json({
         type: "scene",
         revision: assignment.revision,
+        device: device_settings,
         mood,
         scene: {
           width: scene.panel_width,
@@ -114,6 +128,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
     return NextResponse.json({
       type: "playlist",
       revision: assignment.revision,
+      device: device_settings,
       mood,
       playlist: {
         loop: playlist.loop ?? true,

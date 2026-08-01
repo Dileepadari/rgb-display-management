@@ -24,7 +24,9 @@ import {
 import { Plus, Trash2, Wifi, WifiOff, Sparkles, Settings2, ChevronDown } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { HelpTip } from "@/components/help-tip"
 import { PANEL_LAYOUTS } from "@/lib/panel-layouts"
+import { TIMEZONES, toPosixTimezone } from "@/lib/timezones"
 import useSWR from "swr"
 
 interface Device {
@@ -37,6 +39,7 @@ interface Device {
   panel_rows: number
   panel_unit_size: number
   brightness: number
+  timezone: string | null
   is_online: boolean
   last_sync: string | null
   thingspeak_channel_id: string | null
@@ -325,6 +328,9 @@ function DeviceConfigDialog({
     panel_cols: device.panel_cols ?? 1,
     panel_rows: device.panel_rows ?? 1,
     panel_unit_size: device.panel_unit_size ?? 64,
+    // Normalise legacy IANA values so the picker shows the matching option
+    // rather than rendering empty.
+    timezone: toPosixTimezone(device.timezone),
     thingspeak_channel_id: device.thingspeak_channel_id ?? "",
     thingspeak_read_key: device.thingspeak_read_key ?? "",
     thingspeak_write_key: device.thingspeak_write_key ?? "",
@@ -490,6 +496,31 @@ function DeviceConfigDialog({
           <p className="text-muted-foreground text-xs">
             Total resolution: {form.panel_cols * form.panel_unit_size} x {form.panel_rows * form.panel_unit_size} pixels
           </p>
+
+          <div className="space-y-1">
+            <Label className="gap-1.5">
+              Timezone
+              <HelpTip>
+                Used by clock elements. The panel keeps time itself over NTP, so this applies even with the
+                website closed, and daylight saving is handled on-device.
+              </HelpTip>
+            </Label>
+            <Select
+              value={form.timezone}
+              onValueChange={(v) => setForm({ ...form, timezone: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.id} value={tz.id}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <Collapsible className="border-t border-border pt-4">
             <CollapsibleTrigger className="group flex w-full items-center justify-between text-sm font-medium">

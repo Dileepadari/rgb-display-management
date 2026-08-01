@@ -14,8 +14,8 @@ import type { SceneElement } from "@/lib/scene-schema"
 // you watch here is what the panel does.
 export function MoodReactionPreview({
   reaction,
-  panelWidth = 64,
-  panelHeight = 64,
+  panelWidth: panelWidthProp,
+  panelHeight: panelHeightProp,
   px = 128,
   /** Restart the loop this many ms after a "leave" reaction finishes. */
   replayDelayMs = 900,
@@ -33,6 +33,12 @@ export function MoodReactionPreview({
   replayDelayMs?: number
   scene?: { width: number; height: number; elements: SceneElement[] } | null
 }) {
+  // Default to a single 64x64 module when no wall size is known. Passing the
+  // real size matters: the canvas is sized in scene pixels, so a 128-wide wall
+  // rendered into a 64-wide canvas loses its right half.
+  const panelWidth = panelWidthProp ?? 64
+  const panelHeight = panelHeightProp ?? 64
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cachesRef = useRef<RenderCaches>({ images: new Map(), weather: new Map() })
 

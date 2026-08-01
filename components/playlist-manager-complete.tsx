@@ -28,6 +28,7 @@ import useSWR from "swr"
 import { PlaylistPreview, type PlaylistPreviewItem } from "@/components/playlist-preview"
 import { SceneThumbnail } from "@/components/scene-thumbnail"
 import { normalizeSceneElements, type SceneElement } from "@/lib/scene-schema"
+import { MAX_PLAYLIST_ITEMS } from "@/lib/playlist-schema"
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core"
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -519,11 +520,23 @@ function PlaylistItemsEditor({
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={addItem} disabled={!addSceneId} variant="outline" className="gap-2">
+          <Button
+            onClick={addItem}
+            disabled={!addSceneId || items.length >= MAX_PLAYLIST_ITEMS}
+            variant="outline"
+            className="gap-2"
+          >
             <Plus className="h-4 w-4" />
             Add
           </Button>
         </div>
+
+        {items.length >= MAX_PLAYLIST_ITEMS && (
+          <p className="text-warning text-xs">
+            {MAX_PLAYLIST_ITEMS} scenes is the limit — the panel keeps the whole playlist in memory so it can
+            rotate without re-fetching.
+          </p>
+        )}
 
         {/* Plays the rotation you're building, at the durations you've set —
             the only way to judge whether a scene needs longer before saving. */}

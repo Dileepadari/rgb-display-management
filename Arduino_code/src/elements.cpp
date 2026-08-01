@@ -153,6 +153,15 @@ bool parseDeviceFeed(JsonObjectConst obj, DeviceFeed &out) {
   out.revision = obj["revision"] | 0;
   const char *feedType = obj["type"] | "scene";
 
+  if (obj["device"].is<JsonObjectConst>()) {
+    JsonObjectConst dev = obj["device"];
+    out.settings.brightness = dev["brightness"] | 100;
+    out.settings.timezone = String((const char *)(dev["timezone"] | "UTC"));
+    out.settings.panelCols = dev["panel_cols"] | 1;
+    out.settings.panelRows = dev["panel_rows"] | 1;
+    out.settings.panelUnitSize = dev["panel_unit_size"] | 64;
+  }
+
   if (strcmp(feedType, "playlist") == 0 && obj["playlist"].is<JsonObjectConst>()) {
     out.isPlaylist = true;
     JsonObjectConst pl = obj["playlist"];
