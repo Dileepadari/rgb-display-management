@@ -11,7 +11,7 @@
 
 // Base URL of the deployed web app (no trailing slash), e.g. "https://your-app.vercel.app"
 // or "http://192.168.1.50:3000" for local-network testing.
-#define BACKEND_BASE_URL "http://your-backend-host:3000"
+#define BACKEND_BASE_URL "http://rgbos.dileepadari.dev"
 
 // Per-device token from the devices.device_api_token column (set when the device
 // row is created in the web app). Authenticates /api/device-feed/[token].
