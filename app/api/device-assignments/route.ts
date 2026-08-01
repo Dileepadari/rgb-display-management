@@ -17,7 +17,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from("device_assignments")
-      .select("device_id, target_type, scene_id, playlist_id, revision")
+      .select("device_id, target_type, scene_id, playlist_id, revision, active_mood_id, mood_started_at")
       .eq("user_id", user.id)
 
     if (error) throw error

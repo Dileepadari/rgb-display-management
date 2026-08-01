@@ -22,6 +22,7 @@
 #include "secrets.h"
 #include "panel_config.h"
 #include "elements.h"
+#include "mood.h"
 
 // ---------- WiFi ----------
 const char *ssid = WIFI_SSID;
@@ -44,6 +45,8 @@ VirtualMatrixPanel_T<PANEL_CHAIN_TYPE> *display = nullptr;
 
 // ---------- Content state ----------
 DeviceFeed feed;
+// The mood currently performing over the scene; inactive when none is set.
+Mood activeMood;
 uint32_t appliedRevision = 0;
 bool haveFeed = false;
 uint8_t currentPlaylistIndex = 0;
@@ -121,6 +124,8 @@ void loop() {
       lastRenderMs = now;
       display->clearScreen();
       renderScene(*display, scene, now);
+      // Composited last so the character and tint sit on top of the scene.
+      renderMood(*display, activeMood, scene.width, scene.height, now);
     }
   }
 
@@ -269,6 +274,16 @@ bool fetchDeviceFeed() {
 
   feed = newFeed;
   haveFeed = true;
+
+  // The mood rides along in the same payload; its lifecycle clock starts now,
+  // when the device applies it (the server's timestamp is on a different
+  // clock, and the ESP32 has no reliable shared time base with it).
+  parseMood(doc["mood"].as<JsonObjectConst>(), activeMood);
+  if (activeMood.active) {
+    Serial.printf("[main] mood: %s/%s for %us\n", activeMood.character.c_str(),
+                  activeMood.emote.c_str(), activeMood.holdSeconds);
+  }
+
   return true;
 }
 

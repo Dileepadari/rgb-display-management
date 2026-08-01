@@ -99,6 +99,8 @@ struct DeviceFeed {
   uint32_t revision = 0;
   Scene scene;
   Playlist playlist;
+  // A mood reaction composited over whatever the scene/playlist is showing.
+  // Parsed in main.cpp rather than here so elements.h stays free of mood.h.
 };
 
 // Parses one element from JSON into `out`. Returns false (and leaves `out`

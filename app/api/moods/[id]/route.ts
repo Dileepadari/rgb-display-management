@@ -17,11 +17,20 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   }
 }
 
+// Same vocabularies as the create schema; every field optional so the editor
+// can PATCH a single property.
 const moodUpdateSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().min(1).optional(),
   description: z.string().optional(),
   color: z.string().optional(),
-  animation: z.string().optional(),
+  character: z.enum(["cat", "dog", "bunny", "person", "robot", "bird", "ghost", "alien"]).optional(),
+  emote: z.enum(["idle", "happy", "sad", "wave", "sleep", "love", "angry", "dance", "think"]).optional(),
+  entrance: z.enum(["slide-left", "slide-right", "drop", "fade", "pop"]).optional(),
+  hold_seconds: z.number().int().min(1).max(300).optional(),
+  after_reaction: z.enum(["stay", "leave"]).optional(),
+  position: z.enum(["bottom-left", "bottom-right", "top-left", "top-right", "center"]).optional(),
+  scale: z.number().int().min(1).max(8).optional(),
+  tint_strength: z.number().int().min(0).max(100).optional(),
 })
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {

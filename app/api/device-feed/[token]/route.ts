@@ -27,12 +27,41 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
 
     const { data: assignment, error: assignmentError } = await supabase
       .from("device_assignments")
-      .select("target_type, scene_id, playlist_id, revision")
+      .select("target_type, scene_id, playlist_id, revision, active_mood_id, mood_started_at")
       .eq("device_id", device.id)
       .single()
 
     if (assignmentError || !assignment) {
       return NextResponse.json({ error: "No content assigned to this device yet" }, { status: 404 })
+    }
+
+    // A mood is a character reaction the panel composites on top of whatever
+    // scene/playlist is playing. It rides along in the same payload so the
+    // firmware needs no extra request, and `started_at` is what lets the
+    // device work out how far through the entrance/hold/exit it should be.
+    let mood: Record<string, unknown> | null = null
+    if (assignment.active_mood_id) {
+      const { data: moodRow } = await supabase
+        .from("moods")
+        .select("name, color, character, emote, entrance, hold_seconds, after_reaction, position, scale, tint_strength")
+        .eq("id", assignment.active_mood_id)
+        .single()
+
+      if (moodRow) {
+        mood = {
+          name: moodRow.name,
+          character: moodRow.character,
+          emote: moodRow.emote,
+          entrance: moodRow.entrance,
+          hold_seconds: moodRow.hold_seconds,
+          after: moodRow.after_reaction,
+          position: moodRow.position,
+          scale: moodRow.scale,
+          tint: moodRow.color,
+          tint_strength: moodRow.tint_strength,
+          started_at: assignment.mood_started_at,
+        }
+      }
     }
 
     if (assignment.target_type === "scene") {
@@ -49,6 +78,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
       return NextResponse.json({
         type: "scene",
         revision: assignment.revision,
+        mood,
         scene: {
           width: scene.panel_width,
           height: scene.panel_height,
@@ -84,6 +114,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
     return NextResponse.json({
       type: "playlist",
       revision: assignment.revision,
+      mood,
       playlist: {
         loop: playlist.loop ?? true,
         shuffle: playlist.shuffle ?? false,
