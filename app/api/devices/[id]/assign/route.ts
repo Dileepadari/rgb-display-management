@@ -9,7 +9,7 @@ const assignSchema = z.discriminatedUnion("target_type", [
 ])
 
 // Assigns a scene or playlist to a device: this is the entire "push" action.
-// No image encoding or payload building happens here — images were already
+// No image encoding or payload building happens here - images were already
 // converted to raw pixels and uploaded when the scene was authored. This
 // route just records the assignment, bumps the device's revision counter,
 // and flips the ThingSpeak flag so the ESP32 knows to re-fetch.

@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service"
 import { NextResponse } from "next/server"
 
 // Token-authenticated content feed for the ESP32 (not a Supabase user session
-// — the device can't log in). Returns everything the firmware needs to render
+// - the device can't log in). Returns everything the firmware needs to render
 // and animate a scene or playlist entirely on its own: full element list,
 // image URLs, and (for playlists) every item's duration. ThingSpeak only ever
 // carries the `revision` number that tells the firmware to re-fetch this.

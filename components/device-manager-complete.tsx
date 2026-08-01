@@ -120,7 +120,7 @@ export function DeviceManagerComplete() {
           <ul>
             <li>Add a device with its panel size and ThingSpeak keys, then flash the firmware with the same keys.</li>
             <li>A device reports online once its heartbeat arrives; the badge updates automatically.</li>
-            <li>Assign a scene or playlist to push new content — this bumps the revision the device polls for.</li>
+            <li>Assign a scene or playlist to push new content - this bumps the revision the device polls for.</li>
           </ul>
         }
         actions={
@@ -355,7 +355,7 @@ function DeviceConfigDialog({
       const height = form.panel_rows * form.panel_unit_size
 
       // Reuse a single "Identify" scene per device instead of piling up new
-      // rows every click — same pattern as a normal authored scene, just
+      // rows every click - same pattern as a normal authored scene, just
       // auto-managed.
       const scenesRes = await fetch("/api/scenes")
       const scenes = await scenesRes.json()
@@ -402,7 +402,7 @@ function DeviceConfigDialog({
       const assignBody = await assignRes.json()
       if (!assignRes.ok) throw new Error(assignBody.error ?? "Failed to push identify pattern")
       if (assignBody.warning) toast.warning(assignBody.warning)
-      else toast.success("Identify pattern pushed — check the panel")
+      else toast.success("Identify pattern pushed - check the panel")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error running identify")
     } finally {
@@ -416,7 +416,7 @@ function DeviceConfigDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Configure {device.name}</AlertDialogTitle>
           <AlertDialogDescription>
-            Panel arrangement is informational — it must match what&apos;s actually flashed to the ESP32 (see
+            Panel arrangement is informational - it must match what&apos;s actually flashed to the ESP32 (see
             Arduino_code/SETUP.md). Content changes never require a reflash; arrangement changes do.
           </AlertDialogDescription>
         </AlertDialogHeader>

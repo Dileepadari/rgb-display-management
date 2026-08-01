@@ -1,7 +1,7 @@
 // Writes Arduino_code/include/characters.h from lib/character-sprites.ts.
 //
-// The sprites have to exist in two places — the browser preview draws them
-// from TypeScript, the panel draws them from C — and a preview that disagrees
+// The sprites have to exist in two places - the browser preview draws them
+// from TypeScript, the panel draws them from C - and a preview that disagrees
 // with the panel defeats the point of previewing. So the TypeScript file is
 // the single source and the header is generated. Run after any sprite edit:
 //

@@ -4,13 +4,13 @@
 // This is a deliberately small STARTER set built from verifiable geometry
 // (circles/lines computed from formulas, not hand-drawn pixel-by-pixel) so
 // every icon here is known-correct. Color is applied at draw time by the
-// scene author, so one shape covers several meanings — e.g. "dot" in yellow
+// scene author, so one shape covers several meanings - e.g. "dot" in yellow
 // reads as a sun, in green as "online", in red as "recording".
 //
 // To add a new icon: append a `static const uint16_t MY_ICON[16] = {...}`
 // below (16 row values, MSB-first) and one line in ICONS[]. Keep the same
 // id string used here in sync with the web app's icon manifest
-// (lib/icon-manifest.ts) — the editor must never let someone pick an icon
+// (lib/icon-manifest.ts) - the editor must never let someone pick an icon
 // the firmware can't draw.
 #pragma once
 #include <Arduino.h>

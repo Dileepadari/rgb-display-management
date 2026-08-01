@@ -56,7 +56,7 @@ export function PlaylistManagerComplete() {
   const { data: playlists, isLoading, mutate } = useSWR<Playlist[]>("/api/playlists", fetcher)
   const { data: allScenes } = useSWR<Scene[]>("/api/scenes", fetcher)
   // "__"-prefixed scenes are auto-managed (e.g. the Devices page's Identify
-  // test pattern) — not something the user should be able to add to a playlist.
+  // test pattern) - not something the user should be able to add to a playlist.
   const scenes = allScenes?.filter((s) => !s.name.startsWith("__"))
   const { data: devices } = useSWR<Device[]>("/api/devices", fetcher)
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)

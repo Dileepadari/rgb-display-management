@@ -1,5 +1,5 @@
 -- Removes device columns that predate this repo's migration scripts (added
--- directly against the live database at some point — schema drift), and are
+-- directly against the live database at some point - schema drift), and are
 -- unreferenced anywhere in the codebase. Superseded by 002's typed
 -- thingspeak_read_key/thingspeak_write_key/device_api_token/current_revision
 -- and the device_assignments table.

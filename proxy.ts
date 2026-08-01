@@ -41,7 +41,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Device-facing routes authenticate via their own per-device token, not a
-  // Supabase user session (the ESP32 can't log in) — skip the session gate.
+  // Supabase user session (the ESP32 can't log in) - skip the session gate.
   // Cron routes authenticate via CRON_SECRET (checked in the route itself).
   const skipsSessionGate =
     request.nextUrl.pathname.startsWith('/api/device-feed/') ||

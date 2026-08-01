@@ -1,4 +1,4 @@
-// Mirrors Arduino_code/include/icons.h row-for-row. Keep both in sync — the
+// Mirrors Arduino_code/include/icons.h row-for-row. Keep both in sync - the
 // editor must never let someone pick (or preview) an icon the firmware can't
 // actually draw the same way.
 export const ICON_BITMAPS: Record<string, number[]> = {

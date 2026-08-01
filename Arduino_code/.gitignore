@@ -4,5 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 
-# local credentials — never commit
+# local credentials - never commit
 include/secrets.h

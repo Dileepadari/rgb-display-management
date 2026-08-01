@@ -103,11 +103,11 @@ const ANIMATION_SPEED_HELP: Record<SceneElement["animation"]["type"], string> = 
   scroll: "Pixels travelled per second, right to left.",
   blink: "Blinks per second.",
   pulse: "Brightness cycles per second.",
-  rainbow: "Degrees of hue rotation per second — 360 is one full colour wheel per second.",
+  rainbow: "Degrees of hue rotation per second - 360 is one full colour wheel per second.",
   bounce: "Bounces per second, four pixels up and down.",
 }
 
-// Speed 0 means "never advance", which reads as a broken animation — a scrolling
+// Speed 0 means "never advance", which reads as a broken animation - a scrolling
 // element in particular parks itself just off the right edge and never returns.
 // So switching an element onto an animation seeds a speed that visibly moves.
 const DEFAULT_ANIMATION_SPEED: Record<SceneElement["animation"]["type"], number> = {
@@ -185,7 +185,7 @@ async function uploadImageAsRaw(file: File, width: number, height: number): Prom
 export function SceneEditorComplete() {
   const { data: allScenes, mutate } = useSWR<Scene[]>("/api/scenes", fetcher)
   // "__"-prefixed scenes are auto-managed (e.g. the Devices page's Identify
-  // test pattern) — not something the user authored or should see/edit here.
+  // test pattern) - not something the user authored or should see/edit here.
   const scenes = allScenes?.filter((s) => !s.name.startsWith("__"))
   const { data: devices } = useSWR<Device[]>("/api/devices", fetcher)
   const [selectedScene, setSelectedScene] = useState<Scene | null>(null)
@@ -254,12 +254,12 @@ export function SceneEditorComplete() {
     <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
       <PageHeader
         title="Scene Editor"
-        purpose="Design what your displays show — lay out text, images, clocks, weather, icons and animated characters on a pixel canvas."
+        purpose="Design what your displays show - lay out text, images, clocks, weather, icons and animated characters on a pixel canvas."
         howTo={
           <ul>
             <li>Create a scene, then pick it from the list to open the editor.</li>
             <li>Add elements from the Elements panel; drag them on the canvas or click one to select and edit it.</li>
-            <li>Drag list items to change layering — items lower in the list draw on top.</li>
+            <li>Drag list items to change layering - items lower in the list draw on top.</li>
             <li>Use the zoom slider to inspect pixel detail, then Save to push changes to assigned devices.</li>
           </ul>
         }
@@ -1191,7 +1191,7 @@ function ElementProperties({
           <div className="space-y-1">
             <Label className="gap-1.5">
               Mood
-              <HelpTip>What the character is doing — each mood is its own little looping animation.</HelpTip>
+              <HelpTip>What the character is doing - each mood is its own little looping animation.</HelpTip>
             </Label>
             <Select value={element.emote} onValueChange={(v) => onChange({ emote: v as typeof element.emote })}>
               <SelectTrigger>

@@ -317,7 +317,7 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
         break;
       }
       case ElementType::SCROLL_TEXT: {
-        // scrollText scrolls unconditionally — its motion is the element type
+        // scrollText scrolls unconditionally - its motion is the element type
         // itself, driven by whatever animation keeps animPhase advancing.
         display.setTextSize(el.size);
         int16_t bx, by;

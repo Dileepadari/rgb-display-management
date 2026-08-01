@@ -22,7 +22,7 @@
 // for the full list of options if you wired it differently.
 #define PANEL_CHAIN_TYPE CHAIN_TOP_LEFT_DOWN
 
-// Derived — do not edit.
+// Derived - do not edit.
 #define PANEL_CHAIN_LEN (PANEL_GRID_ROWS * PANEL_GRID_COLS)
 #define DISPLAY_WIDTH (PANEL_RES_X * PANEL_GRID_COLS)
 #define DISPLAY_HEIGHT (PANEL_RES_Y * PANEL_GRID_ROWS)

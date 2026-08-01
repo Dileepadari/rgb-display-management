@@ -2,7 +2,7 @@
 // and the editor's live animated preview both use this, so what you see
 // while authoring a scene is a faithful preview of what the firmware will
 // show. Animation formulas here MUST match Arduino_code/src/elements.cpp's
-// tickAnimations()/renderScene() exactly — see the comment on each case
+// tickAnimations()/renderScene() exactly - see the comment on each case
 // below for the paired firmware line.
 import type { SceneElement } from "@/lib/scene-schema"
 import { drawIcon, ICON_GRID_SIZE } from "@/lib/icons"
@@ -18,7 +18,7 @@ export function createRuntimeState(count: number): AnimRuntime[] {
 }
 
 // Headerless RGB888 dump (see Arduino_code/src/converter.py): width*height*3
-// bytes, row-major, no header — not a format <img> can decode, so we read +
+// bytes, row-major, no header - not a format <img> can decode, so we read +
 // paint it ourselves. (Same routine used in components/scene-editor-complete.tsx.)
 export async function decodeRawImage(url: string, width: number, height: number): Promise<ImageData | null> {
   try {
@@ -55,7 +55,7 @@ export async function fetchWeatherTempC(lat: number, lon: number): Promise<numbe
 
 // Mirrors elements.cpp's tickAnimations().
 // Older stored scenes can predate a schema field (e.g. `animation` was added
-// after some scenes were already saved) — GET doesn't re-validate on read,
+// after some scenes were already saved) - GET doesn't re-validate on read,
 // so the compositor has to tolerate partial data rather than assume every
 // field the current schema requires is actually present.
 function getAnimation(el: SceneElement): SceneElement["animation"] {
@@ -164,7 +164,7 @@ export function renderScene(
 
     let [r, g, b] = getColor(el)
     if (animation.type === "rainbow") {
-      // elements.cpp: hsvToRgb(el.animPhase, ...) — animPhase accumulates degrees/sec
+      // elements.cpp: hsvToRgb(el.animPhase, ...) - animPhase accumulates degrees/sec
       ;[r, g, b] = hsvToRgb(rt.animPhase)
     } else if (animation.type === "pulse") {
       // elements.cpp: factor = (sin(phase*2pi)+1)/2 * 0.8 + 0.2
@@ -199,7 +199,7 @@ export function renderScene(
         break
       }
       case "scrollText": {
-        // scrollText scrolls unconditionally — its motion is the element type
+        // scrollText scrolls unconditionally - its motion is the element type
         // itself, driven by whatever animation keeps animPhase advancing.
         drawX = scrollOffsetX(drawX, ctx.measureText(el.text).width, sceneWidth, rt.animPhase)
         ctx.fillStyle = color

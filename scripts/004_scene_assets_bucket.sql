@@ -1,5 +1,5 @@
 -- Public bucket for scene image assets (.raw pixel dumps). Public read is
--- required — the ESP32 fetches these over a plain HTTPS GET with no auth of
+-- required - the ESP32 fetches these over a plain HTTPS GET with no auth of
 -- its own. Uploads are still restricted to their owner via RLS, scoped by a
 -- per-user folder prefix (<user_id>/<filename>).
 

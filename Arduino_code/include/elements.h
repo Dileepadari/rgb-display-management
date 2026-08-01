@@ -17,7 +17,7 @@
 // animation.type: "none" | "scroll" | "blink" | "pulse" | "rainbow" | "bounce"
 // animation.speed: meaning depends on type (px/sec for scroll, Hz for
 //   blink/pulse, degrees/sec of hue rotation for rainbow, px amplitude
-//   cycles/sec for bounce). See tickAnimation() for the exact formula —
+//   cycles/sec for bounce). See tickAnimation() for the exact formula -
 //   the web preview (lib/scene-compositor.ts, built against this same spec)
 //   must match these formulas exactly.
 #pragma once
@@ -29,7 +29,7 @@
 #define MAX_PLAYLIST_ITEMS 6
 
 // If you enlarge these, re-check free heap (Serial prints it every heartbeat)
-// — a plain ESP32 WROOM has ~320KB RAM total, shared with WiFi/TLS buffers
+// - a plain ESP32 WROOM has ~320KB RAM total, shared with WiFi/TLS buffers
 // and any in-flight image pixel buffers.
 
 enum class ElementType { TEXT, SCROLL_TEXT, IMAGE, CLOCK, WEATHER, ICON, CHARACTER, UNKNOWN };
@@ -64,7 +64,7 @@ struct Element {
   String iconId;
   uint8_t scale = 1;
 
-  // character — ids from characters.h (generated from lib/character-sprites.ts).
+  // character - ids from characters.h (generated from lib/character-sprites.ts).
   // Frame cycling runs off wall-clock millis() rather than animPhase so an
   // idle blink keeps its own cadence even when a scroll/pulse is also running.
   String characterId;
@@ -102,7 +102,7 @@ struct DeviceFeed {
 };
 
 // Parses one element from JSON into `out`. Returns false (and leaves `out`
-// as ElementType::UNKNOWN) if the type is unrecognized — callers should skip
+// as ElementType::UNKNOWN) if the type is unrecognized - callers should skip
 // unknown elements rather than fail the whole scene, so a firmware that's a
 // version behind the web app degrades gracefully instead of showing nothing.
 bool parseElement(JsonObjectConst obj, Element &out);
@@ -124,5 +124,5 @@ void freeSceneAssets(Scene &scene);
 void tickAnimations(Scene &scene, unsigned long nowMs);
 
 // Renders every visible element of the scene to the display. Does not clear
-// the screen or call show()/flush() — caller controls that.
+// the screen or call show()/flush() - caller controls that.
 void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs);

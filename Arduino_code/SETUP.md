@@ -19,7 +19,7 @@ pipx install platformio   # or: pip install --user platformio
 VS Code users can instead install the "PlatformIO IDE" extension, which gives
 you the same thing with a GUI.
 
-## 2. Wiring — GPIO pin map
+## 2. Wiring - GPIO pin map
 
 Unchanged from the previous firmware; the new library uses the exact same pins:
 
@@ -33,19 +33,19 @@ Unchanged from the previous firmware; the new library uses the exact same pins:
 | B2 | 15 | LAT | 2 |
 | CLK | 1 | OE | 4 |
 
-If you're building a *new* controller and wiring from scratch, any pins work —
+If you're building a *new* controller and wiring from scratch, any pins work -
 just update the `pins` struct at the top of `setupMatrix()` in `src/main.cpp`
 to match, in this exact order: `r1, g1, b1, r2, g2, b2, a, b, c, d, e, lat, oe, clk`.
 
 Chaining multiple panels: HUB75 chaining is just each panel's OUT connector
-into the next panel's IN connector. No extra GPIO wiring per panel — the
+into the next panel's IN connector. No extra GPIO wiring per panel - the
 address lines (A–E) and data lines fan through the whole chain electrically.
 
-## 3. Declare your panel arrangement — `include/panel_config.h`
+## 3. Declare your panel arrangement - `include/panel_config.h`
 
 This is the file you edit and reflash whenever you physically add, remove, or
 rearrange panels. It does **not** need to change when you change what's being
-displayed — that's all fetched over the network at runtime.
+displayed - that's all fetched over the network at runtime.
 
 ```c
 #define PANEL_RES_X 64        // pixels per panel, width
@@ -55,41 +55,41 @@ displayed — that's all fetched over the network at runtime.
 #define PANEL_CHAIN_TYPE CHAIN_TOP_LEFT_DOWN
 ```
 
-**Worked example — your 9 panels today:**
+**Worked example - your 9 panels today:**
 - All 9 in a single 3×3 square: `PANEL_GRID_ROWS=3`, `PANEL_GRID_COLS=3`.
 - All 9 in one long strip: `PANEL_GRID_ROWS=1`, `PANEL_GRID_COLS=9`.
 - A 2×4 block (8 panels) with 1 spare: `PANEL_GRID_ROWS=2`, `PANEL_GRID_COLS=4`.
 
 Total resolution is computed automatically (`PANEL_RES_X * PANEL_GRID_COLS`
-by `PANEL_RES_Y * PANEL_GRID_ROWS`) — a 3×3 arrangement is 192×192.
+by `PANEL_RES_Y * PANEL_GRID_ROWS`) - a 3×3 arrangement is 192×192.
 
 **`PANEL_CHAIN_TYPE`** describes *how the daisy-chain snakes across that grid*
-as you physically wired it — this is about wiring order, not the visual
+as you physically wired it - this is about wiring order, not the visual
 "shape". If your chain starts at the top-left panel and serpentines downward
 column by column (the most common way to hand-wire a grid), leave this as
 `CHAIN_TOP_LEFT_DOWN`. If you wired it differently, the full list of options
 is in `.pio/libdeps/upesy_wroom/ESP32 HUB75 LED MATRIX PANEL DMA Display/src/ESP32-HUB75-VirtualMatrixPanel_T.hpp`
-(search `enum PANEL_CHAIN_TYPE`) — `CHAIN_TOP_RIGHT_DOWN`, `CHAIN_BOTTOM_LEFT_UP`,
+(search `enum PANEL_CHAIN_TYPE`) - `CHAIN_TOP_RIGHT_DOWN`, `CHAIN_BOTTOM_LEFT_UP`,
 etc., plus `_ZZ` zigzag variants. If the rendered image looks scrambled/mirrored
-after flashing, this is almost always the setting to change — try the options
+after flashing, this is almost always the setting to change - try the options
 one at a time.
 
-## 4. Credentials — `include/secrets.h`
+## 4. Credentials - `include/secrets.h`
 
 Gitignored, never committed. Copy `include/secrets.example.h` to
 `include/secrets.h` and fill in:
 
-- `WIFI_SSID` / `WIFI_PASSWORD` — your network. Leave `WIFI_USERNAME` empty
+- `WIFI_SSID` / `WIFI_PASSWORD` - your network. Leave `WIFI_USERNAME` empty
   for a normal home/personal WiFi network; fill it in only for
   WPA2-Enterprise networks (university/office) that require a username.
 - `THINGSPEAK_READ_API_KEY` / `THINGSPEAK_WRITE_API_KEY` / `THINGSPEAK_CHANNEL_ID`
-  — this device's dedicated ThingSpeak channel (see Part 1.4/1.5 of the plan
-  — every device gets its own channel once you have more than one).
-- `BACKEND_BASE_URL` — where the web app is reachable from the ESP32's
+  - this device's dedicated ThingSpeak channel (see Part 1.4/1.5 of the plan
+  - every device gets its own channel once you have more than one).
+- `BACKEND_BASE_URL` - where the web app is reachable from the ESP32's
   network. A deployed URL (`https://your-app.vercel.app`) for production, or
   `http://<your-computer's-LAN-IP>:3000` for local development (the ESP32 and
   your dev machine need to be on the same network for that to work).
-- `DEVICE_API_TOKEN` — generated when you create the device row in the web
+- `DEVICE_API_TOKEN` - generated when you create the device row in the web
   app's Devices page; copy it in from there.
 
 ## 5. Build and flash
@@ -112,7 +112,7 @@ is assigned to this device within ~10s of it appearing in the web app.
    wiring order changed) in `include/panel_config.h`.
 3. Reflash: `pio run --target upload`.
 4. In the web app's Devices page, update this device's panel columns/rows to
-   match (informational — used for preview sizing and image-upload cropping,
+   match (informational - used for preview sizing and image-upload cropping,
    but keeping it in sync avoids confusing mismatches). Use the **Identify**
    button there to push a test pattern and confirm the new arrangement renders
    correctly before assigning a real scene.
@@ -120,11 +120,11 @@ is assigned to this device within ~10s of it appearing in the web app.
 ## Troubleshooting
 
 - **Nothing lights up at all**: check 5V power to the panels (a fully-lit
-  64×64 panel can draw several amps — the ESP32's own USB power is *not*
+  64×64 panel can draw several amps - the ESP32's own USB power is *not*
   enough, panels need their own 5V supply), and that `OE`/`LAT`/`CLK` pins
   aren't shared with anything else on the board.
 - **Wrong colors / half the panel dark**: usually a chain-type or scan-type
-  mismatch — see the `PANEL_CHAIN_TYPE` note above.
+  mismatch - see the `PANEL_CHAIN_TYPE` note above.
 - **Flickering**: try lowering `mxconfig.i2sspeed` in `setupMatrix()` (in
   `src/main.cpp`) from the default down to `HZ_8M`.
 - **Crashes/reboots on large arrangements**: a plain ESP32 WROOM has ~320KB

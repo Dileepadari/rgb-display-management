@@ -88,7 +88,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
     { label: "Add Device", page: "devices" },
   ]
 
-  // A device shows a live preview only when a single scene is assigned —
+  // A device shows a live preview only when a single scene is assigned -
   // playlists rotate, so a still frame would misrepresent what's on the panel.
   const previewFor = (device: Device) => {
     const assignment = assignmentByDevice.get(device.id)
@@ -106,7 +106,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           <span className="text-gradient-brand">RGB Display Manager</span>
         </h1>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground md:text-base">
-          Author scenes, rotate them in playlists, and push them to your LED panels — all from one place.
+          Author scenes, rotate them in playlists, and push them to your LED panels - all from one place.
         </p>
         <div className="mt-6 flex flex-wrap gap-2">
           {quickActions.map((action) => (

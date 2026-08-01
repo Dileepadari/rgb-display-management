@@ -1,4 +1,4 @@
-// GENERATED FILE — do not edit by hand.
+// GENERATED FILE - do not edit by hand.
 // Regenerate with: npx vite-node scripts/generate-characters-header.ts
 // Source of truth: lib/character-sprites.ts
 //

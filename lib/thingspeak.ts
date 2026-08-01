@@ -1,5 +1,5 @@
 // ThingSpeak is used purely as a lightweight "something changed" flag per
-// device — never as a payload carrier (its fields are far too small for a
+// device - never as a payload carrier (its fields are far too small for a
 // scene). field1 holds the device's current_revision; the firmware polls it
 // and, on change, fetches the real content from /api/device-feed/[token].
 export async function pushRevision(writeKey: string | null | undefined, revision: number): Promise<boolean> {

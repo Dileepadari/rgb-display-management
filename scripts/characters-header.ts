@@ -1,8 +1,8 @@
 // Renders the contents of Arduino_code/include/characters.h from
 // lib/character-sprites.ts. scripts/generate-characters-header.ts writes it.
 //
-// The sprites have to exist in two places — the browser preview draws them
-// from TypeScript, the panel draws them from C — and a preview that disagrees
+// The sprites have to exist in two places - the browser preview draws them
+// from TypeScript, the panel draws them from C - and a preview that disagrees
 // with the panel defeats the point of previewing. Rather than maintain two
 // hand-written copies, the TypeScript file is the single source and this
 // script regenerates the header. Run it after any sprite edit:
@@ -26,7 +26,7 @@ const upper = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "_")
 export function renderHeader(): string {
   const out: string[] = []
 
-  out.push(`// GENERATED FILE — do not edit by hand.`)
+  out.push(`// GENERATED FILE - do not edit by hand.`)
   out.push(`// Regenerate with: npx vite-node scripts/generate-characters-header.ts`)
   out.push(`// Source of truth: lib/character-sprites.ts`)
   out.push(`//`)

@@ -6,7 +6,7 @@
 //   every ~10s; when it changes, it fetches the FULL scene/playlist content
 //   (arbitrary size, unlike ThingSpeak's field limits) from the web app's
 //   own /api/device-feed/[token] endpoint, caches it, and renders+animates
-//   it entirely locally from then on — no further network traffic is needed
+//   it entirely locally from then on - no further network traffic is needed
 //   to animate. Playlists rotate on-device via local timers.
 #include <Arduino.h>
 #include <WiFi.h>
@@ -28,14 +28,14 @@ const char *ssid = WIFI_SSID;
 const char *wpa2Username = WIFI_USERNAME; // leave secrets.h's value empty for plain WPA2-Personal networks
 const char *wifiPassword = WIFI_PASSWORD;
 
-// ---------- ThingSpeak (trigger channel only — no scene content ever goes through this) ----------
+// ---------- ThingSpeak (trigger channel only - no scene content ever goes through this) ----------
 const char *thingSpeakReadKey = THINGSPEAK_READ_API_KEY;
 const char *thingSpeakWriteKey = THINGSPEAK_WRITE_API_KEY;
 const char *thingSpeakChannelId = THINGSPEAK_CHANNEL_ID;
 
 // ---------- NTP ----------
 const char *ntpServer = "pool.ntp.org";
-const long gmtOffsetSec = 19800; // IST (UTC+5:30) — change for your timezone
+const long gmtOffsetSec = 19800; // IST (UTC+5:30) - change for your timezone
 const int daylightOffsetSec = 0;
 
 // ---------- Matrix ----------
@@ -53,7 +53,7 @@ unsigned long playlistItemStartMs = 0;
 unsigned long lastRevisionCheckMs = 0;
 const unsigned long REVISION_CHECK_INTERVAL_MS = 10000;
 unsigned long lastRenderMs = 0;
-const unsigned long RENDER_INTERVAL_MS = 60; // ~16fps local animation — no network cost per frame
+const unsigned long RENDER_INTERVAL_MS = 60; // ~16fps local animation - no network cost per frame
 unsigned long lastHeartbeatMs = 0;
 const unsigned long HEARTBEAT_INTERVAL_MS = 60000;
 unsigned long lastWiFiRetryMs = 0;
@@ -134,7 +134,7 @@ void loop() {
 
 void setupMatrix() {
   // Field order is fixed by HUB75_I2S_CFG::i2s_pins: r1,g1,b1,r2,g2,b2,a,b,c,d,e,lat,oe,clk.
-  // Values below are the existing physical wiring (see SETUP.md) — unchanged from before this migration.
+  // Values below are the existing physical wiring (see SETUP.md) - unchanged from before this migration.
   HUB75_I2S_CFG::i2s_pins pins = {
       27, 26, 14, // r1, g1, b1
       12, 25, 15, // r2, g2, b2

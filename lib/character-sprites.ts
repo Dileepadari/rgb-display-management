@@ -1,5 +1,5 @@
 // Animated pixel characters. Mirrors Arduino_code/include/characters.h
-// frame-for-frame — the editor must never offer a character/emote pair the
+// frame-for-frame - the editor must never offer a character/emote pair the
 // firmware can't draw identically.
 //
 // A frame is 16 rows of 16 characters. Each character indexes into that

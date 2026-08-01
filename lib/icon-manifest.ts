@@ -1,4 +1,4 @@
-// Must stay in sync with Arduino_code/include/icons.h's ICONS[] — the web
+// Must stay in sync with Arduino_code/include/icons.h's ICONS[] - the web
 // editor must never let someone pick an icon id the firmware can't draw.
 export const ICON_MANIFEST = [
   { id: "dot", label: "Dot" },

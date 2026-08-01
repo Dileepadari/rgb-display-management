@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 // Single source of truth for the scene element shape. Matches
-// Arduino_code/include/elements.h's parseElement() field-for-field — if you
+// Arduino_code/include/elements.h's parseElement() field-for-field - if you
 // add a field here, add it there too (and to lib/icon-manifest.ts for icons).
 
 export const animationSchema = z.object({
@@ -23,7 +23,7 @@ export const textElementSchema = z.object({
   text: z.string().min(1),
   // .catch() rather than a hard bound: old data using a different size
   // convention (e.g. pixel-ish values like 11) should fall back to a sane
-  // default instead of invalidating — and silently dropping — the whole element.
+  // default instead of invalidating - and silently dropping - the whole element.
   size: z.number().int().min(1).max(6).catch(2),
 })
 
@@ -33,7 +33,7 @@ export const scrollTextElementSchema = z.object({
   text: z.string().min(1),
   // .catch() rather than a hard bound: old data using a different size
   // convention (e.g. pixel-ish values like 11) should fall back to a sane
-  // default instead of invalidating — and silently dropping — the whole element.
+  // default instead of invalidating - and silently dropping - the whole element.
   size: z.number().int().min(1).max(6).catch(2),
 })
 
@@ -51,7 +51,7 @@ export const clockElementSchema = z.object({
   format: z.enum(["HH:mm", "HH:mm:ss"]).default("HH:mm"),
   // .catch() rather than a hard bound: old data using a different size
   // convention (e.g. pixel-ish values like 11) should fall back to a sane
-  // default instead of invalidating — and silently dropping — the whole element.
+  // default instead of invalidating - and silently dropping - the whole element.
   size: z.number().int().min(1).max(6).catch(2),
 })
 
@@ -62,7 +62,7 @@ export const weatherElementSchema = z.object({
   lon: z.number().min(-180).max(180),
   // .catch() rather than a hard bound: old data using a different size
   // convention (e.g. pixel-ish values like 11) should fall back to a sane
-  // default instead of invalidating — and silently dropping — the whole element.
+  // default instead of invalidating - and silently dropping - the whole element.
   size: z.number().int().min(1).max(6).catch(2),
 })
 
@@ -74,7 +74,7 @@ export const iconElementSchema = z.object({
 })
 
 // Animated pixel character. `character` and `emote` are ids from
-// lib/character-sprites.ts, which Arduino_code/include/characters.h mirrors —
+// lib/character-sprites.ts, which Arduino_code/include/characters.h mirrors -
 // unknown ids fall back rather than invalidating the element, so a sprite set
 // that gains entries on one side can't drop saved scenes on the other.
 export const characterElementSchema = z.object({
@@ -107,7 +107,7 @@ export type SceneContent = z.infer<typeof sceneContentSchema>
 
 // Fills in defaults (animation, color, visible) for elements saved before
 // those fields existed, and drops anything that doesn't parse at all. Use
-// this whenever reading `elements` from the DB for editing/rendering —
+// this whenever reading `elements` from the DB for editing/rendering -
 // GET responses aren't re-validated, so older rows can be missing fields
 // the current schema assumes are always present.
 export function normalizeSceneElements(raw: unknown[]): SceneElement[] {

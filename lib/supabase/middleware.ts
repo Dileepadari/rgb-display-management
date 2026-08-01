@@ -31,7 +31,7 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // Don't redirect API routes — let API handlers return 401/403 JSON responses.
+  // Don't redirect API routes - let API handlers return 401/403 JSON responses.
   if (pathname.startsWith("/api")) {
     return supabaseResponse
   }

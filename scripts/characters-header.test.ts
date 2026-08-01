@@ -6,7 +6,7 @@ import { renderHeader } from "./characters-header"
 
 // The firmware's sprite header is generated from lib/character-sprites.ts. If
 // someone edits a sprite and forgets to regenerate, the panel would animate
-// differently from the preview — silently, and only visible on real hardware.
+// differently from the preview - silently, and only visible on real hardware.
 // This turns that into a failing test instead.
 describe("characters.h", () => {
   it("is up to date with lib/character-sprites.ts", () => {
@@ -15,7 +15,7 @@ describe("characters.h", () => {
 
     expect(
       checkedIn,
-      "characters.h is stale — run: npx vite-node scripts/generate-characters-header.ts",
+      "characters.h is stale - run: npx vite-node scripts/generate-characters-header.ts",
     ).toBe(renderHeader())
   })
 })
