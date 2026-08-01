@@ -1,5 +1,6 @@
 #include "elements.h"
 #include "icons.h"
+#include "characters.h"
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
@@ -55,6 +56,7 @@ static ElementType parseType(const char *s) {
   if (strcmp(s, "clock") == 0) return ElementType::CLOCK;
   if (strcmp(s, "weather") == 0) return ElementType::WEATHER;
   if (strcmp(s, "icon") == 0) return ElementType::ICON;
+  if (strcmp(s, "character") == 0) return ElementType::CHARACTER;
   return ElementType::UNKNOWN;
 }
 
@@ -114,6 +116,11 @@ bool parseElement(JsonObjectConst obj, Element &out) {
       break;
     case ElementType::ICON:
       out.iconId = String((const char *)(obj["id"] | ""));
+      out.scale = obj["scale"] | 1;
+      break;
+    case ElementType::CHARACTER:
+      out.characterId = String((const char *)(obj["character"] | "cat"));
+      out.emoteId = String((const char *)(obj["emote"] | "idle"));
       out.scale = obj["scale"] | 1;
       break;
     default:
@@ -380,6 +387,15 @@ void renderScene(Adafruit_GFX &display, Scene &scene, unsigned long nowMs) {
           }
           drawIcon(display, rows, drawX, drawY, color, el.scale);
         }
+        break;
+      }
+      case ElementType::CHARACTER: {
+        if (el.animType == AnimType::SCROLL) {
+          drawX = scrollOffsetX(drawX, CHARACTER_GRID_SIZE * el.scale, scene.width, el.animPhase);
+        }
+        // Characters carry their own palette, so the element colour doesn't
+        // tint them, and frames advance on wall-clock time (see elements.h).
+        drawCharacter(display, el.characterId.c_str(), el.emoteId.c_str(), drawX, drawY, el.scale, nowMs);
         break;
       }
       default:

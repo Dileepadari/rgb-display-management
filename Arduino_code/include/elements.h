@@ -12,6 +12,7 @@
 //   { "type": "clock", "x":0,"y":0,"size":2,"format":"HH:mm","color":[...] }
 //   { "type": "weather", "x":0,"y":0,"size":1,"lat":17.4,"lon":78.3,"color":[...] }
 //   { "type": "icon", "x":0,"y":0,"id":"dot","scale":2,"color":[...] }
+//   { "type": "character", "x":0,"y":0,"character":"cat","emote":"wave","scale":2 }
 //
 // animation.type: "none" | "scroll" | "blink" | "pulse" | "rainbow" | "bounce"
 // animation.speed: meaning depends on type (px/sec for scroll, Hz for
@@ -31,7 +32,7 @@
 // — a plain ESP32 WROOM has ~320KB RAM total, shared with WiFi/TLS buffers
 // and any in-flight image pixel buffers.
 
-enum class ElementType { TEXT, SCROLL_TEXT, IMAGE, CLOCK, WEATHER, ICON, UNKNOWN };
+enum class ElementType { TEXT, SCROLL_TEXT, IMAGE, CLOCK, WEATHER, ICON, CHARACTER, UNKNOWN };
 enum class AnimType { NONE, SCROLL, BLINK, PULSE, RAINBOW, BOUNCE };
 
 struct Element {
@@ -62,6 +63,12 @@ struct Element {
   // icon
   String iconId;
   uint8_t scale = 1;
+
+  // character — ids from characters.h (generated from lib/character-sprites.ts).
+  // Frame cycling runs off wall-clock millis() rather than animPhase so an
+  // idle blink keeps its own cadence even when a scroll/pulse is also running.
+  String characterId;
+  String emoteId;
 
   // shared animation runtime state
   float animPhase = 0;

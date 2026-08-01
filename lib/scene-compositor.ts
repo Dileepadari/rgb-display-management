@@ -6,6 +6,7 @@
 // below for the paired firmware line.
 import type { SceneElement } from "@/lib/scene-schema"
 import { drawIcon, ICON_GRID_SIZE } from "@/lib/icons"
+import { CHARACTER_GRID_SIZE, drawCharacter } from "@/lib/character-sprites"
 
 export interface AnimRuntime {
   animPhase: number
@@ -139,6 +140,8 @@ export function elementBounds(
       return box(ctx.measureText("-99C").width, fontSize)
     case "icon":
       return box(ICON_GRID_SIZE * el.scale, ICON_GRID_SIZE * el.scale)
+    case "character":
+      return box(CHARACTER_GRID_SIZE * el.scale, CHARACTER_GRID_SIZE * el.scale)
   }
 }
 
@@ -248,6 +251,17 @@ export function renderScene(
           drawX = scrollOffsetX(drawX, ICON_GRID_SIZE * el.scale, sceneWidth, rt.animPhase)
         }
         drawIcon(ctx, el.id, drawX, drawY, color, el.scale)
+        break
+      }
+      case "character": {
+        if (animation.type === "scroll") {
+          drawX = scrollOffsetX(drawX, CHARACTER_GRID_SIZE * el.scale, sceneWidth, rt.animPhase)
+        }
+        // Characters carry their own palette, so the element colour doesn't
+        // tint them. Their frame cycling is driven by wall-clock time rather
+        // than animPhase, so an idle blink keeps its cadence even when the
+        // element also has a scroll/pulse animation running at some other speed.
+        drawCharacter(ctx, el.character, el.emote, drawX, drawY, el.scale, nowMs)
         break
       }
     }

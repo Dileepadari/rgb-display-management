@@ -34,6 +34,7 @@ import {
   Clock,
   Cloud,
   Shapes,
+  Smile,
   GripVertical,
   ChevronsUp,
   ChevronsDown,
@@ -56,6 +57,8 @@ import { SceneThumbnail } from "@/components/scene-thumbnail"
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 import { type SceneElement, normalizeSceneElements } from "@/lib/scene-schema"
 import { ICON_MANIFEST, type IconId } from "@/lib/icon-manifest"
+import { CHARACTER_GRID_SIZE, CHARACTER_MANIFEST, drawCharacter } from "@/lib/character-sprites"
+import { cn } from "@/lib/utils"
 import {
   createRuntimeState,
   tickAnimations,
@@ -83,7 +86,7 @@ interface Device {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
-const ELEMENT_TYPES: SceneElement["type"][] = ["text", "scrollText", "image", "clock", "weather", "icon"]
+const ELEMENT_TYPES: SceneElement["type"][] = ["text", "scrollText", "image", "clock", "weather", "icon", "character"]
 
 const ELEMENT_TYPE_META: Record<SceneElement["type"], { label: string; icon: typeof Type }> = {
   text: { label: "Text", icon: Type },
@@ -92,6 +95,7 @@ const ELEMENT_TYPE_META: Record<SceneElement["type"], { label: string; icon: typ
   clock: { label: "Clock", icon: Clock },
   weather: { label: "Weather", icon: Cloud },
   icon: { label: "Icon", icon: Shapes },
+  character: { label: "Character", icon: Smile },
 }
 
 const ANIMATION_SPEED_HELP: Record<SceneElement["animation"]["type"], string> = {
@@ -136,6 +140,10 @@ function defaultElementFor(type: SceneElement["type"], panelWidth: number, panel
       return { type, ...base, lat: 0, lon: 0, size: 1 }
     case "icon":
       return { type, ...base, id: "dot", scale: 1 }
+    case "character":
+      // Scale 2 (32px) so the character is legible on a 64x64 panel instead of
+      // landing as a 16px speck in the corner.
+      return { type, ...base, character: "cat", emote: "idle", scale: 2 }
   }
 }
 
@@ -246,7 +254,7 @@ export function SceneEditorComplete() {
     <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
       <PageHeader
         title="Scene Editor"
-        purpose="Design what your displays show — lay out text, images, clocks, weather and icons on a pixel canvas."
+        purpose="Design what your displays show — lay out text, images, clocks, weather, icons and animated characters on a pixel canvas."
         howTo={
           <ul>
             <li>Create a scene, then pick it from the list to open the editor.</li>
@@ -878,6 +886,83 @@ function PropertiesPanel({
   )
 }
 
+// Live thumbnails of every mood the chosen character can play, so you can see
+// the animation before committing to it rather than picking a name blind.
+function CharacterPreviewStrip({
+  characterId,
+  selectedEmote,
+  onPick,
+}: {
+  characterId: string
+  selectedEmote: string
+  onPick: (emote: "idle" | "happy" | "sad" | "wave" | "sleep") => void
+}) {
+  const emotes = CHARACTER_MANIFEST.find((c) => c.id === characterId)?.emotes ?? []
+  return (
+    <div className="space-y-1.5">
+      <Label>Preview moods</Label>
+      <div className="grid grid-cols-3 gap-1.5">
+        {emotes.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            onClick={() => onPick(e.id as "idle" | "happy" | "sad" | "wave" | "sleep")}
+            title={e.label}
+            className={cn(
+              "flex flex-col items-center gap-1 rounded-md border p-1.5 transition-colors",
+              selectedEmote === e.id
+                ? "border-primary bg-primary/10"
+                : "border-border hover:border-primary/50 hover:bg-accent",
+            )}
+          >
+            <CharacterSpriteCanvas characterId={characterId} emoteId={e.id} px={40} />
+            <span className="text-[10px] leading-none">{e.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// A single sprite animating on its own rAF loop, independent of the scene
+// preview so the picker keeps playing even when nothing is selected on canvas.
+function CharacterSpriteCanvas({
+  characterId,
+  emoteId,
+  px,
+}: {
+  characterId: string
+  emoteId: string
+  px: number
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    let raf = 0
+    const loop = () => {
+      ctx.clearRect(0, 0, CHARACTER_GRID_SIZE, CHARACTER_GRID_SIZE)
+      drawCharacter(ctx, characterId, emoteId, 0, 0, 1, performance.now())
+      raf = requestAnimationFrame(loop)
+    }
+    loop()
+    return () => cancelAnimationFrame(raf)
+  }, [characterId, emoteId])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={CHARACTER_GRID_SIZE}
+      height={CHARACTER_GRID_SIZE}
+      style={{ width: px, height: px, imageRendering: "pixelated" }}
+    />
+  )
+}
+
 function ElementProperties({
   element,
   onChange,
@@ -1074,6 +1159,71 @@ function ElementProperties({
             />
             <p className="text-muted-foreground text-xs">{element.scale * 16}px square</p>
           </div>
+        </div>
+      )}
+
+      {element.type === "character" && (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <Label className="gap-1.5">
+              Character
+              <HelpTip>
+                Characters are animated pixel sprites drawn by the panel itself, so they keep moving without the
+                website being open.
+              </HelpTip>
+            </Label>
+            <Select
+              value={element.character}
+              onValueChange={(v) => onChange({ character: v as typeof element.character })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CHARACTER_MANIFEST.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="gap-1.5">
+              Mood
+              <HelpTip>What the character is doing — each mood is its own little looping animation.</HelpTip>
+            </Label>
+            <Select value={element.emote} onValueChange={(v) => onChange({ emote: v as typeof element.emote })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(CHARACTER_MANIFEST.find((c) => c.id === element.character)?.emotes ?? []).map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label className="gap-1.5">
+              Character size
+              <HelpTip>
+                Characters are a 16x16 grid scaled by this number, so {element.scale} renders at{" "}
+                {element.scale * 16}px square.
+              </HelpTip>
+            </Label>
+            <Input
+              type="number"
+              min={1}
+              max={8}
+              value={element.scale}
+              onChange={(e) => onChange({ scale: Number(e.target.value) })}
+            />
+            <p className="text-muted-foreground text-xs">{element.scale * 16}px square</p>
+          </div>
+          <CharacterPreviewStrip characterId={element.character} selectedEmote={element.emote} onPick={(emote) => onChange({ emote })} />
         </div>
       )}
 

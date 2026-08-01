@@ -73,6 +73,18 @@ export const iconElementSchema = z.object({
   scale: z.number().int().min(1).max(8).default(1),
 })
 
+// Animated pixel character. `character` and `emote` are ids from
+// lib/character-sprites.ts, which Arduino_code/include/characters.h mirrors —
+// unknown ids fall back rather than invalidating the element, so a sprite set
+// that gains entries on one side can't drop saved scenes on the other.
+export const characterElementSchema = z.object({
+  type: z.literal("character"),
+  ...baseElement,
+  character: z.enum(["cat", "dog", "person", "robot"]).catch("cat"),
+  emote: z.enum(["idle", "happy", "sad", "wave", "sleep"]).catch("idle"),
+  scale: z.number().int().min(1).max(8).default(1),
+})
+
 export const sceneElementSchema = z.discriminatedUnion("type", [
   textElementSchema,
   scrollTextElementSchema,
@@ -80,6 +92,7 @@ export const sceneElementSchema = z.discriminatedUnion("type", [
   clockElementSchema,
   weatherElementSchema,
   iconElementSchema,
+  characterElementSchema,
 ])
 
 export type SceneElement = z.infer<typeof sceneElementSchema>
