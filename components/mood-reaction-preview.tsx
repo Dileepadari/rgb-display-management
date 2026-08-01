@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react"
 import { CHARACTER_GRID_SIZE, drawCharacter } from "@/lib/character-sprites"
 import { moodFrameState, moodTotalMs, type MoodReaction } from "@/lib/mood-reaction"
+import { createRuntimeState, renderScene, tickAnimations, type RenderCaches } from "@/lib/scene-compositor"
+import type { SceneElement } from "@/lib/scene-schema"
 
 // Plays a mood reaction the way the panel will: the character enters, performs
 // its emote, then stays or leaves — over a mock scene so the tint and the
@@ -17,16 +19,22 @@ export function MoodReactionPreview({
   px = 128,
   /** Restart the loop this many ms after a "leave" reaction finishes. */
   replayDelayMs = 900,
-  backdrop = true,
+  /**
+   * The scene this reaction will actually play over. Passing the device's real
+   * assigned scene is the point of the preview — you're checking the character
+   * doesn't land on your clock. Omitted, a neutral stand-in is drawn instead.
+   */
+  scene,
 }: {
   reaction: MoodReaction
   panelWidth?: number
   panelHeight?: number
   px?: number
   replayDelayMs?: number
-  backdrop?: boolean
+  scene?: { width: number; height: number; elements: SceneElement[] } | null
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const cachesRef = useRef<RenderCaches>({ images: new Map(), weather: new Map() })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -37,6 +45,7 @@ export function MoodReactionPreview({
     const total = moodTotalMs(reaction)
     const loopMs = total === null ? null : total + replayDelayMs
     const start = performance.now()
+    const runtime = createRuntimeState(scene?.elements.length ?? 0)
     let raf = 0
 
     const draw = (now: number) => {
@@ -46,9 +55,12 @@ export function MoodReactionPreview({
       ctx.fillStyle = "#0a0a0a"
       ctx.fillRect(0, 0, panelWidth, panelHeight)
 
-      if (backdrop) {
-        // Stand-in for "whatever scene is playing", so it's obvious the mood
-        // layers on top rather than replacing the content.
+      if (scene && scene.elements.length > 0) {
+        // The real content, animating, underneath — so the preview answers
+        // "what will my panel look like" rather than "what does this sprite do".
+        tickAnimations(scene.elements, runtime, now)
+        renderScene(ctx, panelWidth, panelHeight, scene.elements, runtime, cachesRef.current, now)
+      } else {
         ctx.fillStyle = "#1d2740"
         ctx.fillRect(0, 0, panelWidth, panelHeight)
         ctx.fillStyle = "#33415f"
@@ -76,7 +88,7 @@ export function MoodReactionPreview({
 
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
-  }, [reaction, panelWidth, panelHeight, replayDelayMs, backdrop])
+  }, [reaction, panelWidth, panelHeight, replayDelayMs, scene])
 
   return (
     <canvas

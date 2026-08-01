@@ -37,81 +37,113 @@ interface Patch {
 }
 
 // ── Shared faces ──────────────────────────────────────────────────────────
-// 12 wide x 5 tall, sitting at row 4 col 2 on a standard body. Eyes are 3x3
-// with a solid pupil so they stay legible at scale 1, where a 1px eye
-// disappears entirely.
+// Eyes stay 3x3 with a solid pupil: at scale 1 a 1px eye disappears entirely.
 const FACE_ORIGIN = { row: 4, col: 2 }
 
+// Faces are 12 wide x 7 tall and sit in the head window every body leaves
+// blank. The extra rows over the first version buy the two things that
+// actually carry emotion at this size: a brow row above the eyes, and a
+// two-row mouth that can curve. A mouth drawn on one row can only ever be a
+// straight line, and a face without brows reads as blank no matter what the
+// mouth does.
+//
+// Brow direction is the strongest single signal: inner ends DOWN reads angry,
+// inner ends UP reads sad. Eyes closed into arcs reads happy. Those three
+// conventions do most of the work here.
 const FACES: Record<string, string[]> = {
   open: [
+    "............",
     ".eee....eee.",
     ".epe....epe.",
     ".eee....eee.",
     ".....nn.....",
-    "....llll....",
+    "....oooo....",
+    "............",
   ],
   blink: [
+    "............",
     "............",
     ".ooo....ooo.",
     "............",
     ".....nn.....",
-    "....llll....",
+    "....oooo....",
+    "............",
   ],
+  // Eyes squeezed into upward arcs, open smile with tongue, blush on the cheeks.
   happy: [
+    "............",
     "..o.o..o.o..",
     ".o...o.o...o",
-    "............",
+    "h..........h",
     ".....nn.....",
     "...oooooo...",
+    "....llll....",
   ],
+  // Inner brow ends lifted, outer ends dropped; mouth curves down.
   sad: [
+    "...o....o...",
     ".oo......oo.",
-    "..ee....ee..",
-    "..ep....pe..",
+    ".eee....eee.",
+    ".epe....epe.",
     ".....nn.....",
     "....oooo....",
+    "...o....o...",
   ],
+  // Inner brow ends driven down toward the nose; gritted teeth.
   angry: [
-    ".o........o.",
-    "..oo....oo..",
-    "..ee....ee..",
+    ".oo......oo.",
+    "...o....o...",
+    ".eee....eee.",
+    ".epe....epe.",
     ".....nn.....",
     "...oooooo...",
+    "...o.oo.o...",
   ],
   love: [
+    "............",
     ".h.h....h.h.",
     ".hhh....hhh.",
     "..h......h..",
     ".....nn.....",
     "...oooooo...",
+    "....llll....",
   ],
   sleep: [
+    "............",
     "............",
     ".ooo....ooo.",
     "............",
     ".....nn.....",
     ".....oo.....",
+    "............",
   ],
+  // One brow cocked, far eye squinted, mouth pushed off-centre.
   think: [
+    ".oo.........",
+    "............",
     ".eee....ooo.",
     ".epe........",
-    ".eee........",
     ".....nn.....",
     "......ooo...",
+    "............",
   ],
   dance: [
-    "..o.o..o.o..",
-    ".o...o.o...o",
     "............",
-    ".....nn.....",
-    "....oooo....",
-  ],
-  wink: [
-    ".eee........",
-    ".epe....ooo.",
-    ".eee........",
+    "..o.o.......",
+    ".o...o..eee.",
+    "........epe.",
     ".....nn.....",
     "...oooooo...",
+    "....llll....",
+  ],
+  wink: [
+    "............",
+    "............",
+    ".eee....ooo.",
+    ".epe........",
+    ".....nn.....",
+    "...o....o...",
+    "....oooo....",
   ],
 }
 
@@ -120,16 +152,16 @@ const FACES: Record<string, string[]> = {
 // accents (tear, sleep z's, hearts, thought dots) use the 'w'/'h' codes every
 // character declares.
 const PROPS: Record<string, Patch> = {
-  // Arms attach at the torso (rows 11-14 on every body) and reach up past the
-  // head when raised, so the gesture reads as an arm rather than a stray nub.
-  // A raised arm is capped with a 2px "hand" — at 16px that blob is what makes
-  // a wave legible at all.
-  armLeftUp: { row: 8, col: 1, grid: ["bbo", "bbo", "ob.", "ob.", "ob.", "ob."] },
-  armLeftDown: { row: 11, col: 1, grid: ["ob.", "ob.", "bbo", "bbo"] },
-  armRightUp: { row: 8, col: 12, grid: ["obb", "obb", ".bo", ".bo", ".bo", ".bo"] },
-  armRightDown: { row: 11, col: 12, grid: [".bo", ".bo", "obb", "obb"] },
-  tear: { row: 8, col: 3, grid: ["w", "w"] },
-  tearLow: { row: 10, col: 3, grid: ["w", "w"] },
+  // Arms attach at the torso (rows 12-15 on every body) and reach up alongside
+  // the head when raised, so the gesture reads as an arm rather than a stray
+  // nub. A raised arm is capped with a 2px "hand" — at 16px that blob is what
+  // makes a wave legible at all.
+  armLeftUp: { row: 9, col: 1, grid: ["bbo", "bbo", "ob.", "ob.", "ob.", "ob."] },
+  armLeftDown: { row: 12, col: 1, grid: ["ob.", "ob.", "bbo", "bbo"] },
+  armRightUp: { row: 9, col: 12, grid: ["obb", "obb", ".bo", ".bo", ".bo", ".bo"] },
+  armRightDown: { row: 12, col: 12, grid: [".bo", ".bo", "obb", "obb"] },
+  tear: { row: 9, col: 3, grid: ["w", "w"] },
+  tearLow: { row: 11, col: 3, grid: ["w", "w"] },
   zzzHigh: { row: 0, col: 12, grid: ["..ww", ".w..", "ww.."] },
   zzzLow: { row: 3, col: 12, grid: ["..ww", ".w..", "ww.."] },
   heartLeft: { row: 1, col: 0, grid: ["h.h", "hhh", ".h."] },
@@ -279,168 +311,184 @@ function buildEmotes(src: CharacterSource): Record<string, CharacterEmote> {
 // pixels on silhouette rather than on a thick border.
 
 const CAT_BODY = [
-  "..o........o....",
-  "..oo......oo....",
-  ".obbo....obbo...",
-  ".obbboooobbbo...",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  "..obbbbbbbbbo...",
-  "...ooooooooo....",
-  "....obbbbbo.....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...oo.....oo....",
+  "..o.........o...",
+  "..oo.......oo...",
+  ".obbo.....obbo..",
+  ".obbboooooobbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "...obbbbbbbbo...",
+  "...oo......oo...",
 ]
 
 const DOG_BODY = [
-  "...ooooooooo....",
-  "..obbbbbbbbbo...",
-  "obbobbbbbbbobbo.",
-  "obbobbbbbbbobbo.",
-  "obbobbbbbbbobbo.",
-  "obbobbbbbbbobbo.",
-  "obbobbbbbbbobbo.",
-  "obbobbbbbbbobbo.",
-  ".oobbbbbbbbboo..",
-  "..obbbbbbbbbo...",
-  "...ooooooooo....",
-  "....obbbbbo.....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...oo.....oo....",
+  "...oooooooooo...",
+  "..obbbbbbbbbbo..",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  "obbobbbbbbbbobbo",
+  ".oobbbbbbbbbboo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "...obbbbbbbbo...",
+  "...oo......oo...",
 ]
 
 const BUNNY_BODY = [
-  "...oo...oo......",
-  "..obbo.obbo.....",
-  "..obbo.obbo.....",
-  "..obbooobbo.....",
-  ".obbbbbbbbbo....",
-  ".obbbbbbbbbbo...",
-  ".obbbbbbbbbbo...",
-  ".obbbbbbbbbbo...",
-  ".obbbbbbbbbbo...",
-  "..obbbbbbbbo....",
-  "...ooooooooo....",
-  "....obbbbbo.....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...oo.....oo....",
+  "..oo.......oo...",
+  ".obbo.....obbo..",
+  ".obbo.....obbo..",
+  ".obbooooooobbo..",
+  ".obbbbbbbbbbbo..",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "...obbbbbbbbo...",
+  "...oo......oo...",
 ]
 
 const PERSON_BODY = [
-  "...ohhhhhho.....",
-  "..ohhhhhhhho....",
-  "..ohhhhhhhho....",
-  "..obbbbbbbbo....",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "...obbbbbbbo....",
-  "....ooooooo.....",
-  "....ollllo......",
-  "...ollllllo.....",
-  "...ollllllo.....",
-  "...ollllllo.....",
-  "...oo....oo.....",
+  "...orrrrrrrro...",
+  "..orrrrrrrrrro..",
+  ".orrrrrrrrrrrro.",
+  ".orrrrrrrrrrrro.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....ollllllo....",
+  "...ollllllllo...",
+  "...ollllllllo...",
+  "...oo......oo...",
 ]
 
 const ROBOT_BODY = [
   ".......oo.......",
   "......obbo......",
-  "...ooooooooo....",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "...obbbbbbbo....",
-  "...ooooooooo....",
-  "....obbbbbo.....",
-  "..oobbbbbbboo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "...oo.....oo....",
+  "...oooooooooo...",
+  "..obbbbbbbbbbo..",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obnnnbbo....",
+  "..oobbbbbbbboo..",
+  "..obbbbbbbbbbo..",
+  "...oo......oo...",
 ]
 
 const BIRD_BODY = [
-  "......ooo.......",
-  ".....obbbo......",
-  "....obbbbbo.....",
-  "...obbbbbbbo....",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "....obbbbbo.....",
-  ".....ooooo......",
-  "....oo...oo.....",
-  "...oo.....oo....",
+  ".....oooooo.....",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "..obbbbbbbbbbo..",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "....oooooooo....",
+  "....oo....oo....",
 ]
 
 const GHOST_BODY = [
-  ".....ooooo......",
-  "...oobbbbboo....",
-  "..obbbbbbbbbo...",
-  "..obbbbbbbbbo...",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbobbbobbbbo..",
-  ".obo.obo.obbbo..",
-  "..o...o...ooo...",
+  ".....oooooo.....",
+  "...oobbbbbbooo..",
+  "..obbbbbbbbbbo..",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbobbbobbbbbo.",
+  "..o..o.o...ooo..",
 ]
 
 const ALIEN_BODY = [
   "..o.........o...",
   "...o.......o....",
   "....ooooooo.....",
-  "...obbbbbbbo....",
-  "..obbbbbbbbbo...",
+  "..oobbbbbbboo...",
   ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  ".obbbbbbbbbbbo..",
-  "..obbbbbbbbbo...",
-  "...obbbbbbbo....",
-  "....ooooooo.....",
-  "....obbbbbo.....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...obbbbbbbo....",
-  "...oo.....oo....",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  ".obbbbbbbbbbbbo.",
+  "..obbbbbbbbbbo..",
+  "..obbbbbbbbbbo..",
+  "...oooooooooo...",
+  "....obbbbbbo....",
+  "...obbbbbbbbo...",
+  "...obbbbbbbbo...",
+  "...oo......oo...",
 ]
 
-// Robot and ghost read better with mechanical/hollow eyes than with the
-// organic shared set, so they override the faces that would look wrong.
+// A few bodies want their own eyes: a robot reads as a lit visor rather than
+// eyeballs, a ghost as hollow sockets, an alien as solid almond eyes. Only the
+// faces that would look wrong are overridden — the rest fall through to the
+// shared set, so expressions stay consistent across the cast.
 const ROBOT_FACES: Record<string, string[]> = {
-  open: [".eeee..eeee.", ".eppe..eppe.", ".eeee..eeee.", "............", "...llllll..."],
-  blink: ["............", ".llll..llll.", "............", "............", "...llllll..."],
-  sleep: ["............", ".llll..llll.", "............", "............", "....llll...."],
+  open:  ["............", ".eeee..eeee.", ".eppe..eppe.", ".eeee..eeee.", "............", "...llllll...", "............"],
+  blink: ["............", "............", ".llll..llll.", "............", "............", "...llllll...", "............"],
+  sleep: ["............", "............", ".llll..llll.", "............", "............", "....llll....", "............"],
+  happy: ["............", "..e.e..e.e..", ".e...e.e...e", "............", "............", "...eeeeee...", "....llll...."],
+  sad:   ["...l....l...", ".ll......ll.", ".llll..llll.", ".lppl..lppl.", "............", "....llll....", "...l....l..."],
+  angry: [".ll......ll.", "...l....l...", ".eeee..eeee.", ".eppe..eppe.", "............", "...llllll...", "...l.ll.l..."],
 }
 
 const GHOST_FACES: Record<string, string[]> = {
-  open: [".ooo....ooo.", ".ooo....ooo.", ".ooo....ooo.", "............", "....oooo...."],
-  blink: ["............", ".ooo....ooo.", "............", "............", "....oooo...."],
+  open:  ["............", ".ooo....ooo.", ".ooo....ooo.", ".ooo....ooo.", "............", "....oooo....", "............"],
+  blink: ["............", "............", ".ooo....ooo.", "............", "............", "....oooo....", "............"],
+  sleep: ["............", "............", ".ooo....ooo.", "............", "............", ".....oo.....", "............"],
+  think: [".oo.........", "............", ".ooo....ooo.", ".ooo........", "............", "......ooo...", "............"],
+}
+
+// Solid almond eyes, so the pupil code is unused — expressions come from the
+// brow and mouth rows alone.
+const ALIEN_FACES: Record<string, string[]> = {
+  open:  ["............", ".eee....eee.", ".eee....eee.", "..e......e..", "............", "....oooo....", "............"],
+  blink: ["............", "............", ".eee....eee.", "............", "............", "....oooo....", "............"],
+  sad:   ["...o....o...", ".oo......oo.", ".eee....eee.", "..e......e..", "............", "....oooo....", "...o....o..."],
+  angry: [".oo......oo.", "...o....o...", ".eee....eee.", "..e......e..", "............", "...oooooo...", "...o.oo.o..."],
 }
 
 const SOURCES: Record<string, CharacterSource> = {
@@ -461,7 +509,7 @@ const SOURCES: Record<string, CharacterSource> = {
   },
   person: {
     label: "Person",
-    legend: { o: "#241a12", b: "#f2c08a", l: "#e0574f", e: "#ffffff", p: "#241a12", n: "#b8705a", w: "#8ad4ff", h: "#ff5f8f" },
+    legend: { o: "#241a12", b: "#f2c08a", l: "#e0574f", e: "#ffffff", p: "#241a12", n: "#b8705a", w: "#8ad4ff", h: "#ff5f8f", r: "#3b2415" },
     body: PERSON_BODY,
   },
   robot: {
@@ -485,6 +533,7 @@ const SOURCES: Record<string, CharacterSource> = {
     label: "Alien",
     legend: { o: "#123322", b: "#7ee081", l: "#c8f7c5", e: "#0b1a12", p: "#7ee081", n: "#123322", w: "#8ad4ff", h: "#ff5f8f" },
     body: ALIEN_BODY,
+    faceOverrides: ALIEN_FACES,
   },
 }
 

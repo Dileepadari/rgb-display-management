@@ -24,6 +24,7 @@ import {
 import { HelpTip } from "@/components/help-tip"
 import { MoodReactionPreview, toReaction } from "@/components/mood-reaction-preview"
 import { CHARACTER_MANIFEST } from "@/lib/character-sprites"
+import { normalizeSceneElements, type SceneElement } from "@/lib/scene-schema"
 import { cn } from "@/lib/utils"
 import { Plus, Send, Sparkles, Trash2, X } from "lucide-react"
 import useSWR from "swr"
@@ -52,7 +53,17 @@ interface Device {
 
 interface Assignment {
   device_id: string
+  target_type: "scene" | "playlist"
+  scene_id: string | null
   active_mood_id: string | null
+}
+
+interface Scene {
+  id: string
+  name: string
+  panel_width: number
+  panel_height: number
+  elements: SceneElement[] | null
 }
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
@@ -96,10 +107,31 @@ export function MoodBoardComplete() {
     "/api/device-assignments",
     fetcher,
   )
+  const { data: rawScenes } = useSWR<Scene[]>("/api/scenes", fetcher)
 
   const moods = Array.isArray(rawMoods) ? rawMoods : []
   const devices = Array.isArray(rawDevices) ? rawDevices : []
   const assignments = Array.isArray(rawAssignments) ? rawAssignments : []
+  const scenes = Array.isArray(rawScenes) ? rawScenes : []
+
+  // The scene a reaction will actually land on top of, so previews show your
+  // real content rather than a stand-in. Playlists rotate, so there's no single
+  // frame to show — those fall back to the neutral backdrop.
+  const sceneForDevice = (deviceId: string) => {
+    const assignment = assignments.find((a) => a.device_id === deviceId)
+    if (!assignment || assignment.target_type !== "scene" || !assignment.scene_id) return null
+    const scene = scenes.find((sc) => sc.id === assignment.scene_id)
+    if (!scene) return null
+    return {
+      width: scene.panel_width,
+      height: scene.panel_height,
+      elements: normalizeSceneElements(scene.elements ?? []),
+    }
+  }
+
+  // The library and the create form preview against whichever panel is set up,
+  // so the cards aren't showing a fiction either.
+  const referenceScene = devices.length > 0 ? sceneForDevice(devices[0].id) : null
 
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState(BLANK)
@@ -402,9 +434,11 @@ export function MoodBoardComplete() {
 
               <div className="space-y-2">
                 <Label>Live preview</Label>
-                <MoodReactionPreview reaction={formReaction} px={200} />
+                <MoodReactionPreview reaction={formReaction} px={200} scene={referenceScene} />
                 <p className="text-muted-foreground max-w-[200px] text-xs">
-                  The stripes stand in for whatever scene the device is playing.
+                  {referenceScene
+                    ? "Shown over the scene your panel is currently displaying."
+                    : "Assign a scene to a device and it'll show underneath here."}
                 </p>
               </div>
             </form>
@@ -436,7 +470,7 @@ export function MoodBoardComplete() {
                         : "border-border hover:border-primary/50 hover:bg-accent",
                     )}
                   >
-                    <MoodReactionPreview reaction={toReaction(mood)} px={96} />
+                    <MoodReactionPreview reaction={toReaction(mood)} px={96} scene={referenceScene} />
                     <div className="w-full">
                       <p className="truncate text-sm font-medium">{mood.name}</p>
                       <p className="text-muted-foreground truncate text-xs">
@@ -465,7 +499,7 @@ export function MoodBoardComplete() {
             ) : (
               <>
                 <div className="flex items-center gap-3 rounded-lg border border-border p-3">
-                  <MoodReactionPreview reaction={toReaction(selectedMood)} px={80} />
+                  <MoodReactionPreview reaction={toReaction(selectedMood)} px={80} scene={referenceScene} />
                   <div className="min-w-0">
                     <p className="truncate font-medium">{selectedMood.name}</p>
                     <p className="text-muted-foreground text-xs">{selectedMood.description}</p>

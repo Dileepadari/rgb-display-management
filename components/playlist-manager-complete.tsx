@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Trash2, Play, Pause, Send, ArrowUp, ArrowDown, GripVertical } from "lucide-react"
 import useSWR from "swr"
+import { PlaylistPreview, type PlaylistPreviewItem } from "@/components/playlist-preview"
+import { SceneThumbnail } from "@/components/scene-thumbnail"
+import { normalizeSceneElements, type SceneElement } from "@/lib/scene-schema"
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from "@dnd-kit/core"
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -43,6 +46,9 @@ interface Playlist {
 interface Scene {
   id: string
   name: string
+  panel_width: number
+  panel_height: number
+  elements: SceneElement[] | null
 }
 
 interface Device {
@@ -52,12 +58,31 @@ interface Device {
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
+// Playlist rows only store scene ids and durations; the preview needs the
+// actual scene content, so join them here rather than in three call sites.
+function toPreviewItems(items: PlaylistItem[], scenes: Scene[]): PlaylistPreviewItem[] {
+  return items
+    .map((item) => {
+      const scene = scenes.find((s) => s.id === item.scene_id)
+      if (!scene) return null
+      return {
+        sceneName: scene.name,
+        durationSeconds: item.duration_seconds,
+        width: scene.panel_width,
+        height: scene.panel_height,
+        elements: normalizeSceneElements(scene.elements ?? []),
+      }
+    })
+    .filter((x): x is PlaylistPreviewItem => x !== null)
+}
+
 export function PlaylistManagerComplete() {
   const { data: playlists, isLoading, mutate } = useSWR<Playlist[]>("/api/playlists", fetcher)
   const { data: allScenes } = useSWR<Scene[]>("/api/scenes", fetcher)
   // "__"-prefixed scenes are auto-managed (e.g. the Devices page's Identify
   // test pattern) - not something the user should be able to add to a playlist.
   const scenes = allScenes?.filter((s) => !s.name.startsWith("__"))
+  const sceneList: Scene[] = Array.isArray(allScenes) ? allScenes : []
   const { data: devices } = useSWR<Device[]>("/api/devices", fetcher)
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -209,6 +234,12 @@ export function PlaylistManagerComplete() {
             >
               <CardContent className="pt-6">
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <PlaylistPreview
+                    items={toPreviewItems(playlist.scenes ?? [], sceneList)}
+                    loop={playlist.loop}
+                    shuffle={playlist.shuffle}
+                    px={132}
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold">{playlist.name}</h3>
@@ -288,6 +319,7 @@ function SortablePlaylistItem({
   index,
   label,
   duration,
+  scene,
   onDurationChange,
   onMoveUp,
   onMoveDown,
@@ -298,6 +330,7 @@ function SortablePlaylistItem({
   index: number
   label: string
   duration: number
+  scene?: Scene | null
   onDurationChange: (value: number) => void
   onMoveUp: () => void
   onMoveDown: () => void
@@ -323,6 +356,15 @@ function SortablePlaylistItem({
         <GripVertical className="h-4 w-4" />
       </button>
       <span className="text-muted-foreground w-5 text-center font-mono text-xs">{index + 1}</span>
+      <div className="h-10 w-10 shrink-0 overflow-hidden rounded border border-border bg-black">
+        {scene ? (
+          <SceneThumbnail
+            width={scene.panel_width}
+            height={scene.panel_height}
+            elements={normalizeSceneElements(scene.elements ?? [])}
+          />
+        ) : null}
+      </div>
       <span className="flex-1 truncate text-sm">{label}</span>
       <Input
         type="number"
@@ -471,6 +513,21 @@ function PlaylistItemsEditor({
           </Button>
         </div>
 
+        {/* Plays the rotation you're building, at the durations you've set —
+            the only way to judge whether a scene needs longer before saving. */}
+        <div className="flex flex-wrap items-start gap-4">
+          <PlaylistPreview
+            items={toPreviewItems(items, scenes)}
+            loop={playlist.loop}
+            shuffle={playlist.shuffle}
+            px={176}
+          />
+          <p className="text-muted-foreground max-w-[220px] text-xs">
+            Runs at the durations below, honouring this playlist&apos;s loop and shuffle settings — the same way the
+            panel will.
+          </p>
+        </div>
+
         <div className="space-y-2">
           {items.length === 0 ? (
             <p className="text-muted-foreground text-sm">No scenes in this playlist yet.</p>
@@ -489,6 +546,7 @@ function PlaylistItemsEditor({
                     index={i}
                     label={sceneName(item.scene_id)}
                     duration={item.duration_seconds}
+                    scene={scenes.find((sc) => sc.id === item.scene_id) ?? null}
                     onDurationChange={(v) => updateDuration(i, v)}
                     onMoveUp={() => moveItem(i, -1)}
                     onMoveDown={() => moveItem(i, 1)}
