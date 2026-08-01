@@ -10,6 +10,7 @@ import { DeviceManagerComplete } from "@/components/device-manager-complete"
 import { PlaylistManagerComplete } from "@/components/playlist-manager-complete"
 import { MoodBoardComplete } from "@/components/mood-board-complete"
 import AdminDashboard from "@/components/admin-dashboard"
+import { SettingsPage } from "@/components/settings-page"
 import AuthPage from "@/components/auth-page"
 
 export default function Home() {
@@ -45,7 +46,8 @@ export default function Home() {
         {currentPage === "devices" && <DeviceManagerComplete />}
         {currentPage === "playlists" && <PlaylistManagerComplete />}
         {currentPage === "moods" && <MoodBoardComplete />}
-        {currentPage === "admin" && <AdminDashboard />}
+        {currentPage === "admin" && <AdminDashboard onNavigate={setCurrentPage} />}
+        {currentPage === "settings" && <SettingsPage />}
       </main>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onNavigate={setCurrentPage} />
     </div>

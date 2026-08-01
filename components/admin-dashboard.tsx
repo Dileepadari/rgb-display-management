@@ -8,10 +8,14 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import useSWR from "swr"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 interface Device {
   id: string
   name: string
+  device_id: string
+  brightness: number
   is_online: boolean
   user_id: string
   created_at: string
@@ -64,15 +68,20 @@ const chartTooltipStyle = {
   borderRadius: "8px",
 }
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onNavigate }: { onNavigate?: (page: string) => void }) => {
   const [activeTab, setActiveTab] = useState("overview")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
 
   const { data: devices = [] } = useSWR<Device[]>("/api/devices", fetcher)
   const { data: scenes = [] } = useSWR("/api/scenes", fetcher)
   const { data: playlists = [] } = useSWR<Playlist[]>("/api/playlists", fetcher)
   const { data: moods = [] } = useSWR("/api/moods", fetcher)
+
+  // These endpoints can return an error object rather than an array, which
+  // would make .length/.map throw during render.
+  const deviceList: Device[] = Array.isArray(devices) ? devices : []
+  const sceneList = Array.isArray(scenes) ? scenes : []
+  const playlistList: Playlist[] = Array.isArray(playlists) ? playlists : []
+  const moodList = Array.isArray(moods) ? moods : []
 
   const analyticsData = Array.from({ length: 6 }, (_, i) => {
     const month = new Date()
@@ -130,60 +139,47 @@ const AdminDashboard = () => {
     },
   ]
 
-  interface User {
+  interface ActivityEntry {
     id: string
-    email: string
-    profile: {
-      name: string
-      active: boolean
-      joined: string
-    }
+    type: string
+    message: string
+    created_at: string
   }
 
-  interface SystemLog {
-    id: string
-    timestamp: string
-    event: string
-    severity: "error" | "warning" | "info"
-    user: string
-  }
+  const { data: rawActivity } = useSWR<ActivityEntry[]>("/api/activity", fetcher)
+  const activity = Array.isArray(rawActivity) ? rawActivity : []
 
-  const { data: users = [] } = useSWR<User[]>("/api/users", fetcher)
-  const { data: logs = [] } = useSWR<SystemLog[]>("/api/system-logs", fetcher)
-
-  const recentUsers = users.map((user) => ({
-    id: user.id,
-    name: user.profile?.name || "Unknown",
-    email: user.email,
-    devices: (Array.isArray(devices) ? devices : []).filter((d) => d.user_id === user.id).length,
-    status: user.profile?.active ? ("active" as const) : ("inactive" as const),
-    joined: user.profile?.joined || new Date().toISOString().split("T")[0],
-  }))
-
-  const systemLogs = logs.map((log) => ({
-    id: log.id,
-    timestamp: new Date(log.timestamp).toLocaleString(),
-    event: log.event,
-    severity: log.severity,
-    user: log.user,
-  }))
-
-  const filteredUsers = recentUsers.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = filterStatus === "all" || user.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
-
-  const severityDot = (severity: "error" | "warning" | "info") => {
-    switch (severity) {
-      case "error":
-        return "bg-destructive"
-      case "warning":
-        return "bg-warning"
-      default:
-        return "bg-success"
+  // Everything in this report is already loaded client-side, so the export is
+  // a local file build rather than a round trip to an endpoint that would only
+  // re-derive the same numbers.
+  const handleExportReport = () => {
+    const report = {
+      generated_at: new Date().toISOString(),
+      totals: {
+        devices: deviceList.length,
+        online_devices: deviceList.filter((d) => d.is_online).length,
+        scenes: sceneList.length,
+        playlists: playlistList.length,
+        moods: moodList.length,
+      },
+      devices: deviceList.map((d) => ({
+        name: d.name,
+        device_id: d.device_id,
+        online: d.is_online,
+        brightness: d.brightness,
+      })),
+      activity: activity.map((a) => ({ at: a.created_at, type: a.type, message: a.message })),
     }
+
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }),
+    )
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `rgb-report-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success("Report downloaded")
   }
 
   return (
@@ -197,11 +193,11 @@ const AdminDashboard = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExportReport}>
             <Download className="h-4 w-4" />
             Export Report
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => onNavigate?.("settings")}>
             <Settings className="h-4 w-4" />
             Settings
           </Button>
@@ -211,9 +207,8 @@ const AdminDashboard = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -310,83 +305,39 @@ const AdminDashboard = () => {
         </TabsContent>
 
         {/* Users Tab */}
-        <TabsContent value="users" className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        <TabsContent value="activity" className="space-y-4">
+          <Card>
+            <div className="border-b border-border p-6">
+              <h3 className="text-lg font-semibold">Recent activity</h3>
+              <p className="text-muted-foreground text-sm">
+                Everything that changed what your panels are showing — scene and playlist pushes, mood reactions,
+                and devices going online or offline.
+              </p>
             </div>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full sm:w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <Card className="overflow-hidden">
-            {filteredUsers.length === 0 ? (
-              <p className="text-muted-foreground p-8 text-center text-sm">Nothing here yet.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Email</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Devices</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Joined</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-accent border-b border-border/50 transition-colors">
-                        <td className="px-6 py-4 text-sm">{user.name}</td>
-                        <td className="text-muted-foreground px-6 py-4 text-sm">{user.email}</td>
-                        <td className="px-6 py-4 text-sm">{user.devices}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <Badge
-                            variant="outline"
-                            className={
-                              user.status === "active"
-                                ? "border-success/30 bg-success/10 text-success"
-                                : "border-border bg-muted text-muted-foreground"
-                            }
-                          >
-                            {user.status}
-                          </Badge>
-                        </td>
-                        <td className="text-muted-foreground px-6 py-4 text-sm">{user.joined}</td>
-                        <td className="px-6 py-4 text-sm">
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon-sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon-sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon-sm">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <div className="divide-y divide-border">
+              {activity.length === 0 ? (
+                <p className="text-muted-foreground p-6 text-sm">
+                  Nothing yet. Push a scene or apply a mood and it will show up here.
+                </p>
+              ) : (
+                activity.map((entry) => (
+                  <div key={entry.id} className="flex items-start justify-between gap-4 p-4">
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={cn(
+                          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                          entry.type === "device_offline" ? "bg-destructive" : "bg-success",
+                        )}
+                      />
+                      <p className="text-sm">{entry.message}</p>
+                    </div>
+                    <time className="text-muted-foreground shrink-0 text-xs">
+                      {new Date(entry.created_at).toLocaleString()}
+                    </time>
+                  </div>
+                ))
+              )}
+            </div>
           </Card>
         </TabsContent>
 
@@ -459,40 +410,6 @@ const AdminDashboard = () => {
         </TabsContent>
 
         {/* Logs Tab */}
-        <TabsContent value="logs">
-          <Card>
-            <div className="space-y-4 p-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">System Logs</h3>
-                <Button variant="outline" size="sm">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filter
-                </Button>
-              </div>
-              {systemLogs.length === 0 ? (
-                <p className="text-muted-foreground py-8 text-center text-sm">Nothing here yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {systemLogs.map((log) => (
-                    <div key={log.id} className="hover:bg-accent flex items-start gap-4 rounded-lg p-3 transition-colors">
-                      <div className={`mt-2 h-2 w-2 rounded-full ${severityDot(log.severity)}`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{log.event}</p>
-                          <span className="text-muted-foreground whitespace-nowrap text-xs">{log.timestamp}</span>
-                        </div>
-                        <p className="text-muted-foreground mt-1 text-xs">By: {log.user}</p>
-                      </div>
-                      <Button variant="ghost" size="icon-sm">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   )

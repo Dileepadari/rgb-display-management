@@ -30,6 +30,7 @@ import {
   Sun,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
 } from "lucide-react"
 
 interface NavigationProps {
@@ -46,6 +47,7 @@ const navItems = [
   { id: "playlists", label: "Playlists", icon: Play },
   { id: "moods", label: "Moods", icon: Smile },
   { id: "admin", label: "Admin", icon: BarChart3 },
+  { id: "settings", label: "Settings", icon: Settings },
 ]
 
 function BrandMark({ collapsed = false }: { collapsed?: boolean }) {

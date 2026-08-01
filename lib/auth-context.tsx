@@ -19,6 +19,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>
   signup: (email: string, password: string, name: string) => Promise<{ needsEmailConfirmation: boolean }>
   logout: () => Promise<void>
+  updateName: (name: string) => Promise<void>
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
+  signOutEverywhere: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -84,8 +87,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
+  const updateName = async (name: string) => {
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.updateUser({ data: { full_name: name } })
+    if (error) throw new Error(error.message)
+    if (data.user) setUser(toUser(data.user))
+  }
+
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters")
+    }
+
+    const supabase = createClient()
+    const {
+      data: { user: current },
+    } = await supabase.auth.getUser()
+    if (!current?.email) throw new Error("Not signed in")
+
+    // updateUser() alone would let anyone holding a live session change the
+    // password without proving they know the current one. Re-authenticating
+    // first means a borrowed/stolen session can't lock the owner out.
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: current.email,
+      password: currentPassword,
+    })
+    if (reauthError) throw new Error("Current password is incorrect")
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw new Error(error.message)
+  }
+
+  // Revokes every refresh token for this user, so other browsers/devices are
+  // signed out too — not just this tab.
+  const signOutEverywhere = async () => {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signOut({ scope: "global" })
+    if (error) throw new Error(error.message)
+    setUser(null)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoggedIn: !!user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoggedIn: !!user, loading, login, signup, logout, updateName, changePassword, signOutEverywhere }}>
       {children}
     </AuthContext.Provider>
   )
