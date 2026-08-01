@@ -13,14 +13,31 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useAuth } from "@/lib/auth-context"
 import { cn } from "@/lib/utils"
-import { Zap, Grid3x3, Tv, Play, Smile, BarChart3, LogOut, User, Menu, Moon, Sun } from "lucide-react"
+import {
+  Zap,
+  Grid3x3,
+  Tv,
+  Play,
+  Smile,
+  BarChart3,
+  LogOut,
+  User,
+  Menu,
+  Moon,
+  Sun,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from "lucide-react"
 
 interface NavigationProps {
   currentPage: string
   setCurrentPage: (page: string) => void
 }
+
+const SIDEBAR_STORAGE_KEY = "sidebar-collapsed"
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: Grid3x3 },
@@ -31,47 +48,91 @@ const navItems = [
   { id: "admin", label: "Admin", icon: BarChart3 },
 ]
 
-function BrandMark() {
+function BrandMark({ collapsed = false }: { collapsed?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5 px-4 py-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/60">
+    <div className={cn("flex items-center gap-2.5 py-4", collapsed ? "justify-center px-2" : "px-4")}>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary-accent to-tertiary-accent glow-primary">
         <Zap className="h-5 w-5 text-primary-foreground" />
       </div>
-      <span className="text-base font-semibold tracking-tight text-sidebar-foreground">RGB Display Manager</span>
+      {!collapsed && (
+        <span className="font-heading text-base font-semibold tracking-tight text-sidebar-foreground">
+          RGB Display Manager
+        </span>
+      )}
     </div>
   )
 }
 
-function NavList({ currentPage, onNavigate }: { currentPage: string; onNavigate: (page: string) => void }) {
+function NavList({
+  currentPage,
+  onNavigate,
+  collapsed = false,
+}: {
+  currentPage: string
+  onNavigate: (page: string) => void
+  collapsed?: boolean
+}) {
   return (
-    <nav className="flex-1 space-y-1 px-3">
+    <nav className={cn("flex-1 space-y-1", collapsed ? "px-2" : "px-3")}>
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive = currentPage === item.id
-        return (
+        const button = (
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
+            aria-label={item.label}
             className={cn(
-              "relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "relative flex w-full items-center gap-3 rounded-md py-2 text-sm font-medium transition-colors",
+              collapsed ? "justify-center px-2" : "px-3",
               isActive
-                ? "bg-primary/10 text-primary"
+                ? "bg-gradient-to-r from-primary/15 to-secondary-accent/10 text-primary"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
             )}
           >
-            {isActive && <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary" />}
+            {isActive && (
+              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-gradient-to-b from-primary to-secondary-accent" />
+            )}
             <Icon className="h-4 w-4 shrink-0" />
-            {item.label}
+            {!collapsed && item.label}
           </button>
+        )
+
+        if (!collapsed) return button
+        return (
+          <Tooltip key={item.id}>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+          </Tooltip>
         )
       })}
     </nav>
   )
 }
 
-function ThemeToggle() {
+function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
   const { theme, setTheme } = useTheme()
   const isDark = theme === "dark"
+
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            aria-label="Toggle dark mode"
+            className="w-full text-sidebar-foreground/70 hover:bg-sidebar-accent"
+          >
+            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{isDark ? "Dark" : "Light"} mode</TooltipContent>
+      </Tooltip>
+    )
+  }
+
   return (
     <div className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-sidebar-foreground/70">
       <span className="flex items-center gap-2">
@@ -87,17 +148,21 @@ function ThemeToggle() {
   )
 }
 
-function UserMenu() {
+function UserMenu({ collapsed = false }: { collapsed?: boolean }) {
   const { user, logout } = useAuth()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 px-3 text-sidebar-foreground hover:bg-sidebar-accent"
+          className={cn(
+            "w-full gap-2 text-sidebar-foreground hover:bg-sidebar-accent",
+            collapsed ? "justify-center px-2" : "justify-start px-3",
+          )}
+          aria-label={user?.name ?? "Account"}
         >
           <User className="h-4 w-4 shrink-0" />
-          <span className="truncate text-sm">{user?.name}</span>
+          {!collapsed && <span className="truncate text-sm">{user?.name}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
@@ -117,6 +182,19 @@ function UserMenu() {
 
 export default function Navigation({ currentPage, setCurrentPage }: NavigationProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Safe to read storage during init: this tree only mounts once auth has
+  // resolved client-side, so it never renders during SSR.
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true",
+  )
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next))
+      return next
+    })
+  }
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page)
@@ -126,24 +204,40 @@ export default function Navigation({ currentPage, setCurrentPage }: NavigationPr
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-        <BrandMark />
-        <div className="mt-2 flex-1 overflow-y-auto">
-          <NavList currentPage={currentPage} onNavigate={handleNavigate} />
+      <aside
+        className={cn(
+          "hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 md:flex",
+          collapsed ? "w-16" : "w-64",
+        )}
+      >
+        <BrandMark collapsed={collapsed} />
+        <div className={cn("px-2 pb-2", collapsed ? "flex justify-center" : "flex justify-end")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
         </div>
-        <div className="space-y-1 border-t border-sidebar-border p-3">
-          <ThemeToggle />
-          <UserMenu />
+        <div className="mt-1 flex-1 overflow-y-auto">
+          <NavList currentPage={currentPage} onNavigate={handleNavigate} collapsed={collapsed} />
+        </div>
+        <div className={cn("space-y-1 border-t border-sidebar-border", collapsed ? "p-2" : "p-3")}>
+          <ThemeToggle collapsed={collapsed} />
+          <UserMenu collapsed={collapsed} />
         </div>
       </aside>
 
       {/* Mobile top bar */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/60">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-secondary-accent to-tertiary-accent">
             <Zap className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold">RGB Display Manager</span>
+          <span className="font-heading text-sm font-semibold">RGB Display Manager</span>
         </div>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>

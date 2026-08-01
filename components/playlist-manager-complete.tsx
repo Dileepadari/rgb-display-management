@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -116,17 +117,24 @@ export function PlaylistManagerComplete() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Playlist Manager</h2>
-          <p className="text-muted-foreground text-sm">Rotate scenes automatically across your displays</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Playlist
-        </Button>
-      </div>
+    <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
+      <PageHeader
+        title="Playlist Manager"
+        purpose="Rotate scenes automatically across your displays, each for a duration you choose."
+        howTo={
+          <ul>
+            <li>Create a playlist, then add scenes to it and set how long each one stays on screen.</li>
+            <li>Drag items by the grip handle to reorder them, or use the arrow buttons.</li>
+            <li>Assign the playlist to a device from the Devices page to start the rotation.</li>
+          </ul>
+        }
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Playlist
+          </Button>
+        }
+      />
 
       {showForm && (
         <Card>

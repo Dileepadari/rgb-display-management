@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -177,17 +178,25 @@ export function SceneEditorComplete() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Scene Editor</h2>
-          <p className="text-muted-foreground text-sm">Design what your displays show</p>
-        </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Scene
-        </Button>
-      </div>
+    <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
+      <PageHeader
+        title="Scene Editor"
+        purpose="Design what your displays show — lay out text, images, clocks, weather and icons on a pixel canvas."
+        howTo={
+          <ul>
+            <li>Create a scene, then pick it from the list to open the editor.</li>
+            <li>Add elements from the Elements panel; drag them on the canvas or click one to select and edit it.</li>
+            <li>Drag list items to change layering — items lower in the list draw on top.</li>
+            <li>Use the zoom slider to inspect pixel detail, then Save to push changes to assigned devices.</li>
+          </ul>
+        }
+        actions={
+          <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Scene
+          </Button>
+        }
+      />
 
       {showForm && (
         <Card>
