@@ -53,7 +53,7 @@ const navItems = [
 function BrandMark({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div className={cn("flex items-center gap-2.5 py-4", collapsed ? "justify-center px-2" : "px-4")}>
-      {/* Masked, not drawn — see .brand-mark in globals.css. Takes the theme
+      {/* Masked, not drawn - see .brand-mark in globals.css. Takes the theme
           accent so it works on both grounds. */}
       <div className="brand-mark h-9 w-9 shrink-0" role="img" aria-label="ADK DEV" />
       {!collapsed && (

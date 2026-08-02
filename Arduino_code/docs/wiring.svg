@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="831" viewBox="0 0 900 831" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+<rect width="900" height="831" fill="#fbf9f6"/>
+<text x="40" y="42" font-size="21" font-weight="700" fill="#1d1a24">HUB75 panel to ESP32</text>
+<text x="40" y="64" font-size="13" fill="#6b6674">Wire the ESP32 to the panel&#8217;s IN connector. Rows are in connector-pin order, so every wire runs straight across.</text>
+<rect x="96" y="84" width="204" height="495" rx="9" fill="#fff" stroke="#d8d2ca" stroke-width="1.5"/>
+<text x="198" y="110" font-size="13" font-weight="700" fill="#1d1a24" text-anchor="middle">ESP32</text>
+<text x="198" y="128" font-size="10.5" fill="#6b6674" text-anchor="middle">WROOM / DevKit</text>
+<rect x="596" y="84" width="212" height="495" rx="9" fill="#fff" stroke="#d8d2ca" stroke-width="1.5"/>
+<text x="702" y="110" font-size="13" font-weight="700" fill="#1d1a24" text-anchor="middle">HUB75  IN</text>
+<text x="702" y="128" font-size="10.5" fill="#6b6674" text-anchor="middle">16-pin IDC (J1)</text>
+<line x1="300" y1="154" x2="596" y2="154" stroke="#c8382f" stroke-width="2.4"/>
+<circle cx="300" cy="154" r="3.6" fill="#c8382f"/><circle cx="596" cy="154" r="3.6" fill="#c8382f"/>
+<text x="286" y="158" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 27</text>
+<rect x="608" y="145" width="26" height="18" rx="4" fill="#c8382f" opacity="0.14"/>
+<text x="621" y="158" font-size="11" font-family="ui-monospace,monospace" fill="#c8382f" font-weight="700" text-anchor="middle">1</text>
+<text x="644" y="158" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">R1</text>
+<line x1="300" y1="181" x2="596" y2="181" stroke="#2f8f42" stroke-width="2.4"/>
+<circle cx="300" cy="181" r="3.6" fill="#2f8f42"/><circle cx="596" cy="181" r="3.6" fill="#2f8f42"/>
+<text x="286" y="185" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 26</text>
+<rect x="608" y="172" width="26" height="18" rx="4" fill="#2f8f42" opacity="0.14"/>
+<text x="621" y="185" font-size="11" font-family="ui-monospace,monospace" fill="#2f8f42" font-weight="700" text-anchor="middle">2</text>
+<text x="644" y="185" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">G1</text>
+<line x1="300" y1="208" x2="596" y2="208" stroke="#2f5fc8" stroke-width="2.4"/>
+<circle cx="300" cy="208" r="3.6" fill="#2f5fc8"/><circle cx="596" cy="208" r="3.6" fill="#2f5fc8"/>
+<text x="286" y="212" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 14</text>
+<rect x="608" y="199" width="26" height="18" rx="4" fill="#2f5fc8" opacity="0.14"/>
+<text x="621" y="212" font-size="11" font-family="ui-monospace,monospace" fill="#2f5fc8" font-weight="700" text-anchor="middle">3</text>
+<text x="644" y="212" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">B1</text>
+<line x1="300" y1="235" x2="596" y2="235" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="6 4"/>
+<circle cx="300" cy="235" r="3.6" fill="#5a5a5a"/><circle cx="596" cy="235" r="3.6" fill="#5a5a5a"/>
+<text x="286" y="239" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GND</text>
+<rect x="608" y="226" width="26" height="18" rx="4" fill="#5a5a5a" opacity="0.14"/>
+<text x="621" y="239" font-size="11" font-family="ui-monospace,monospace" fill="#5a5a5a" font-weight="700" text-anchor="middle">4</text>
+<text x="644" y="239" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">GND</text>
+<line x1="300" y1="262" x2="596" y2="262" stroke="#c8382f" stroke-width="2.4"/>
+<circle cx="300" cy="262" r="3.6" fill="#c8382f"/><circle cx="596" cy="262" r="3.6" fill="#c8382f"/>
+<text x="286" y="266" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 12</text>
+<rect x="608" y="253" width="26" height="18" rx="4" fill="#c8382f" opacity="0.14"/>
+<text x="621" y="266" font-size="11" font-family="ui-monospace,monospace" fill="#c8382f" font-weight="700" text-anchor="middle">5</text>
+<text x="644" y="266" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">R2</text>
+<line x1="300" y1="289" x2="596" y2="289" stroke="#2f8f42" stroke-width="2.4"/>
+<circle cx="300" cy="289" r="3.6" fill="#2f8f42"/><circle cx="596" cy="289" r="3.6" fill="#2f8f42"/>
+<text x="286" y="293" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 25</text>
+<rect x="608" y="280" width="26" height="18" rx="4" fill="#2f8f42" opacity="0.14"/>
+<text x="621" y="293" font-size="11" font-family="ui-monospace,monospace" fill="#2f8f42" font-weight="700" text-anchor="middle">6</text>
+<text x="644" y="293" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">G2</text>
+<line x1="300" y1="316" x2="596" y2="316" stroke="#2f5fc8" stroke-width="2.4"/>
+<circle cx="300" cy="316" r="3.6" fill="#2f5fc8"/><circle cx="596" cy="316" r="3.6" fill="#2f5fc8"/>
+<text x="286" y="320" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 15</text>
+<rect x="608" y="307" width="26" height="18" rx="4" fill="#2f5fc8" opacity="0.14"/>
+<text x="621" y="320" font-size="11" font-family="ui-monospace,monospace" fill="#2f5fc8" font-weight="700" text-anchor="middle">7</text>
+<text x="644" y="320" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">B2</text>
+<line x1="300" y1="343" x2="596" y2="343" stroke="#a8681a" stroke-width="2.4"/>
+<circle cx="300" cy="343" r="3.6" fill="#a8681a"/><circle cx="596" cy="343" r="3.6" fill="#a8681a"/>
+<text x="286" y="347" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 5</text>
+<rect x="608" y="334" width="26" height="18" rx="4" fill="#a8681a" opacity="0.14"/>
+<text x="621" y="347" font-size="11" font-family="ui-monospace,monospace" fill="#a8681a" font-weight="700" text-anchor="middle">8</text>
+<text x="644" y="347" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">E</text>
+<line x1="300" y1="370" x2="596" y2="370" stroke="#a8681a" stroke-width="2.4"/>
+<circle cx="300" cy="370" r="3.6" fill="#a8681a"/><circle cx="596" cy="370" r="3.6" fill="#a8681a"/>
+<text x="286" y="374" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 32</text>
+<rect x="608" y="361" width="26" height="18" rx="4" fill="#a8681a" opacity="0.14"/>
+<text x="621" y="374" font-size="11" font-family="ui-monospace,monospace" fill="#a8681a" font-weight="700" text-anchor="middle">9</text>
+<text x="644" y="374" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">A</text>
+<line x1="300" y1="397" x2="596" y2="397" stroke="#a8681a" stroke-width="2.4"/>
+<circle cx="300" cy="397" r="3.6" fill="#a8681a"/><circle cx="596" cy="397" r="3.6" fill="#a8681a"/>
+<text x="286" y="401" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 17</text>
+<rect x="608" y="388" width="26" height="18" rx="4" fill="#a8681a" opacity="0.14"/>
+<text x="621" y="401" font-size="11" font-family="ui-monospace,monospace" fill="#a8681a" font-weight="700" text-anchor="middle">10</text>
+<text x="644" y="401" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">B</text>
+<line x1="300" y1="424" x2="596" y2="424" stroke="#a8681a" stroke-width="2.4"/>
+<circle cx="300" cy="424" r="3.6" fill="#a8681a"/><circle cx="596" cy="424" r="3.6" fill="#a8681a"/>
+<text x="286" y="428" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 33</text>
+<rect x="608" y="415" width="26" height="18" rx="4" fill="#a8681a" opacity="0.14"/>
+<text x="621" y="428" font-size="11" font-family="ui-monospace,monospace" fill="#a8681a" font-weight="700" text-anchor="middle">11</text>
+<text x="644" y="428" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">C</text>
+<line x1="300" y1="451" x2="596" y2="451" stroke="#a8681a" stroke-width="2.4"/>
+<circle cx="300" cy="451" r="3.6" fill="#a8681a"/><circle cx="596" cy="451" r="3.6" fill="#a8681a"/>
+<text x="286" y="455" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 16</text>
+<rect x="608" y="442" width="26" height="18" rx="4" fill="#a8681a" opacity="0.14"/>
+<text x="621" y="455" font-size="11" font-family="ui-monospace,monospace" fill="#a8681a" font-weight="700" text-anchor="middle">12</text>
+<text x="644" y="455" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">D</text>
+<line x1="300" y1="478" x2="596" y2="478" stroke="#6b3fa0" stroke-width="2.4"/>
+<circle cx="300" cy="478" r="3.6" fill="#6b3fa0"/><circle cx="596" cy="478" r="3.6" fill="#6b3fa0"/>
+<text x="286" y="482" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 1</text>
+<rect x="608" y="469" width="26" height="18" rx="4" fill="#6b3fa0" opacity="0.14"/>
+<text x="621" y="482" font-size="11" font-family="ui-monospace,monospace" fill="#6b3fa0" font-weight="700" text-anchor="middle">13</text>
+<text x="644" y="482" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">CLK</text>
+<line x1="300" y1="505" x2="596" y2="505" stroke="#6b3fa0" stroke-width="2.4"/>
+<circle cx="300" cy="505" r="3.6" fill="#6b3fa0"/><circle cx="596" cy="505" r="3.6" fill="#6b3fa0"/>
+<text x="286" y="509" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 2</text>
+<rect x="608" y="496" width="26" height="18" rx="4" fill="#6b3fa0" opacity="0.14"/>
+<text x="621" y="509" font-size="11" font-family="ui-monospace,monospace" fill="#6b3fa0" font-weight="700" text-anchor="middle">14</text>
+<text x="644" y="509" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">LAT</text>
+<line x1="300" y1="532" x2="596" y2="532" stroke="#6b3fa0" stroke-width="2.4"/>
+<circle cx="300" cy="532" r="3.6" fill="#6b3fa0"/><circle cx="596" cy="532" r="3.6" fill="#6b3fa0"/>
+<text x="286" y="536" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GPIO 4</text>
+<rect x="608" y="523" width="26" height="18" rx="4" fill="#6b3fa0" opacity="0.14"/>
+<text x="621" y="536" font-size="11" font-family="ui-monospace,monospace" fill="#6b3fa0" font-weight="700" text-anchor="middle">15</text>
+<text x="644" y="536" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">OE</text>
+<line x1="300" y1="559" x2="596" y2="559" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="6 4"/>
+<circle cx="300" cy="559" r="3.6" fill="#5a5a5a"/><circle cx="596" cy="559" r="3.6" fill="#5a5a5a"/>
+<text x="286" y="563" font-size="12.5" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-weight="600" fill="#1d1a24" text-anchor="end">GND</text>
+<rect x="608" y="550" width="26" height="18" rx="4" fill="#5a5a5a" opacity="0.14"/>
+<text x="621" y="563" font-size="11" font-family="ui-monospace,monospace" fill="#5a5a5a" font-weight="700" text-anchor="middle">16</text>
+<text x="644" y="563" font-size="12.5" font-family="ui-monospace,monospace" font-weight="600" fill="#1d1a24">GND</text>
+<text x="702" y="599" font-size="10.5" fill="#6b6674" text-anchor="middle">pin 8 is E on 64&#215;64 panels, GND on 64&#215;32</text>
+<text x="198" y="599" font-size="10.5" fill="#6b6674" text-anchor="middle">GND: connect at least one</text>
+<line x1="40" y1="633" x2="860" y2="633" stroke="#d8d2ca"/>
+<text x="40" y="655" font-size="15" font-weight="700" fill="#1d1a24">Power &#8212; separate supply, shared ground</text>
+<rect x="40" y="663" width="176" height="62" rx="8" fill="#fff" stroke="#d8d2ca" stroke-width="1.5"/>
+<text x="128.0" y="690" font-size="12.5" font-weight="700" fill="#1d1a24" text-anchor="middle">5V supply</text>
+<text x="128.0" y="708" font-size="10.5" fill="#6b6674" text-anchor="middle">~4 A per 64&#215;64 panel</text>
+<path d="M216 694.0 H288 V694.0 H370" fill="none" stroke="#c8382f" stroke-width="2.4"/>
+<rect x="370" y="663" width="240" height="62" rx="8" fill="#fff" stroke="#d8d2ca" stroke-width="1.5"/>
+<circle cx="370" cy="694.0" r="3.6" fill="#c8382f"/>
+<text x="490" y="690" font-size="12.5" font-weight="700" fill="#1d1a24" text-anchor="middle">Panel 5V + GND</text>
+<text x="490" y="708" font-size="10.5" fill="#6b6674" text-anchor="middle">screw terminals on the panel</text>
+<path d="M216 694.0 H288 V772.0 H370" fill="none" stroke="#5a5a5a" stroke-width="2.4"/>
+<rect x="370" y="741" width="240" height="62" rx="8" fill="#fff" stroke="#d8d2ca" stroke-width="1.5"/>
+<circle cx="370" cy="772.0" r="3.6" fill="#5a5a5a"/>
+<text x="490" y="768" font-size="12.5" font-weight="700" fill="#1d1a24" text-anchor="middle">ESP32 GND</text>
+<text x="490" y="786" font-size="10.5" fill="#6b6674" text-anchor="middle">REQUIRED &#8212; common reference</text>
+<text x="640" y="685" font-size="11.5" fill="#6b6674">Do not power the panel from the</text>
+<text x="640" y="704" font-size="11.5" fill="#6b6674">ESP32 &#8212; USB cannot supply 4 A.</text>
+<text x="640" y="723" font-size="11.5" fill="#6b6674">For a multi-panel wall, run 5V to</text>
+<text x="640" y="742" font-size="11.5" fill="#6b6674">every panel, not through the ribbon.</text>
+</svg>

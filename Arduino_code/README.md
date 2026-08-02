@@ -11,23 +11,32 @@ panel arrangement, see **[SETUP.md](SETUP.md)**.
 
 | | |
 | --- | --- |
-| **ESP32** | The build targets `upesy_wroom` — any ESP32 WROOM dev board works |
+| **ESP32** | The build targets `upesy_wroom` - any ESP32 WROOM dev board works |
 | **HUB75 panel(s)** | 64×64 modules. All panels in one wall must be identical |
-| **5V power supply** | Sized for your wall — see [Power](#power) |
+| **5V power supply** | Sized for your wall - see [Power](#power) |
 | **16-pin IDC ribbon** | Usually supplied with the panel |
 | **Jumper wires** | ESP32 → panel IN connector |
 
 **The ESP32's USB port cannot power a panel.** A single fully-lit 64×64 panel
 draws around 4 A at 5 V. USB gives you 0.5 A. Attempting it browns out the
-board and the panel flickers or shows garbage — this is the single most common
+board and the panel flickers or shows garbage - this is the single most common
 cause of "it doesn't work".
+
+---
+
+## At a glance
+
+![HUB75 to ESP32 wiring diagram](docs/wiring.svg)
+
+The sections below explain each part. If you only read one thing: the panel
+needs its **own 5V supply**, and it must **share a ground** with the ESP32.
 
 ---
 
 ## The HUB75 connector
 
 Panels have two 16-pin IDC headers: **IN** (sometimes `J1`) and **OUT** (`J2`).
-The ESP32 goes to **IN**. Look for the arrow silkscreened on the PCB — it
+The ESP32 goes to **IN**. Look for the arrow silkscreened on the PCB - it
 points in the direction data flows, away from IN.
 
 Pin 1 is marked on the board, usually with a small triangle, a square solder
@@ -49,12 +58,12 @@ Looking at the connector **from the front of the board, notch upward**:
 ```
 
 Odd pins run down the left, even down the right. Some panels label `LAT` as
-`STB` (strobe) and `OE` as `nOE` or `/OE` — same signal.
+`STB` (strobe) and `OE` as `nOE` or `/OE` - same signal.
 
 > **Pin 8 differs by panel type.** On 64×64 panels (1/32 scan) it is the **E**
 > address line, as above. On 64×32 panels (1/16 scan) it is **GND**, and the
 > E wire is simply left unconnected. Wiring E to a panel that expects GND there
-> is a short — check your panel's scan rate before connecting pin 8.
+> is a short - check your panel's scan rate before connecting pin 8.
 
 ---
 
@@ -71,7 +80,7 @@ Wire the panel's IN connector to these ESP32 GPIOs:
 | 5 | R2 | **12** | Red, lower half |
 | 6 | G2 | **25** | Green, lower half |
 | 7 | B2 | **15** | Blue, lower half |
-| 8 | E | **5** | Row address bit 4 (64×64 only — GND on 64×32) |
+| 8 | E | **5** | Row address bit 4 (64×64 only - GND on 64×32) |
 | 9 | A | **32** | Row address bit 0 |
 | 10 | B | **17** | Row address bit 1 |
 | 11 | C | **33** | Row address bit 2 |
@@ -84,7 +93,7 @@ Wire the panel's IN connector to these ESP32 GPIOs:
 Ground appears twice on the connector. Connect **at least one**; connecting
 both is better for signal integrity on longer ribbons.
 
-The panel is driven in two halves simultaneously — that's why there are two sets
+The panel is driven in two halves simultaneously - that's why there are two sets
 of RGB lines. R1/G1/B1 feed the top 32 rows, R2/G2/B2 the bottom 32.
 
 ### If you're wiring from scratch
@@ -129,12 +138,12 @@ and 38-pin DevKit. Nothing else in the build changes.
 
 While you're in there: `lib_extra_dirs` points at a local Arduino libraries
 folder on the original machine. If PlatformIO complains about it, delete that
-line — everything needed is in `lib_deps`.
+line - everything needed is in `lib_deps`.
 
 ### 2. The pin map may stop the board booting
 
 This matters more. **The default map above uses all four ESP32 strapping pins**
-— GPIO 12, 15, 5 and 2 — which the chip reads at power-on to decide how to
+- GPIO 12, 15, 5 and 2 - which the chip reads at power-on to decide how to
 start:
 
 | GPIO | Signal here | What the chip does with it at boot |
@@ -146,7 +155,7 @@ start:
 
 GPIO 12 is the dangerous one. A panel connected to it can hold the line high
 through its input buffer, and the symptom is a board that works fine on its own
-but goes dead — no serial, no boot — the moment the ribbon is plugged in.
+but goes dead - no serial, no boot - the moment the ribbon is plugged in.
 
 Whether it bites you depends on the panel. Some drive the line low, some
 don't. **If your current wiring boots and runs, leave it alone.** If it
@@ -179,10 +188,10 @@ HUB75_I2S_CFG::i2s_pins pins = {
 ```
 
 This also frees **GPIO 1**, so the serial monitor stays readable while the panel
-runs — worth having when you're debugging wiring.
+runs - worth having when you're debugging wiring.
 
 > Two caveats. If your module is an **ESP32-WROVER** (has PSRAM), GPIO 16 and 17
-> are wired to the PSRAM and can't be used — move E and D to 32 and 33, and put
+> are wired to the PSRAM and can't be used - move E and D to 32 and 33, and put
 > CLK somewhere else. And **I have not tested this map on hardware**; it is
 > derived from the ESP32 pin restrictions, not from a working build. Change one
 > thing at a time and keep the serial monitor open.
@@ -190,7 +199,7 @@ runs — worth having when you're debugging wiring.
 ### 30-pin vs 38-pin
 
 Both expose everything this firmware needs. The 30-pin board simply omits some
-GND/unusable pins. Note that on a 30-pin board the header labels skip around —
+GND/unusable pins. Note that on a 30-pin board the header labels skip around -
 go by the **GPIO number printed on the silkscreen**, not by counting pin
 positions.
 
@@ -210,12 +219,12 @@ the ESP32's 5V pin.
 ```
 
 **The ESP32 and the panel must share a ground.** Without it the data lines have
-no common reference and you get flicker, wrong colours, or nothing at all —
+no common reference and you get flicker, wrong colours, or nothing at all -
 even though everything looks correctly wired.
 
 Budget roughly **4 A per 64×64 panel** at full white. Real content draws far
 less, but size the supply for the worst case or bright scenes will brown out.
-A 3×3 wall of nine panels is a ~36 A budget — that is a serious supply, and
+A 3×3 wall of nine panels is a ~36 A budget - that is a serious supply, and
 you should inject power to each panel rather than daisy-chaining power through
 the ribbon.
 
@@ -233,7 +242,7 @@ ESP32 ──▶ [IN] Panel 1 [OUT] ──▶ [IN] Panel 2 [OUT] ──▶ [IN] P
 The address and data lines fan through the whole chain electrically. Only the
 first panel connects to the ESP32.
 
-Power is the exception — **run 5V to every panel from the supply**, not through
+Power is the exception - **run 5V to every panel from the supply**, not through
 the chain. The ribbon cannot carry tens of amps.
 
 Once wired, tell the firmware the shape in
@@ -248,7 +257,7 @@ Once wired, tell the firmware the shape in
 `CHAIN_TOP_LEFT_DOWN` means the chain starts at the top-left panel and
 serpentines downward. If yours snakes differently, pick another value from the
 `PANEL_CHAIN_TYPE` enum in `VirtualMatrixPanel_T.hpp`. Rearranging panels means
-editing this file and reflashing — it is a compile-time constant because the
+editing this file and reflashing - it is a compile-time constant because the
 driver needs it before any network traffic happens.
 
 ---
@@ -263,10 +272,10 @@ way to confirm orientation and chain order without reading serial logs.
 | --- | --- |
 | Nothing lights at all | Panel 5V absent, or no shared ground with the ESP32 |
 | Flickering, dim, or random pixels | Undersized supply, or missing common ground |
-| Colours wrong (red↔blue) | R and B lines swapped — check pins 1/3 and 5/7 |
+| Colours wrong (red↔blue) | R and B lines swapped - check pins 1/3 and 5/7 |
 | Top half fine, bottom half dark | R2/G2/B2 (pins 5–7) not connected |
-| Image doubled or squashed vertically | Wrong scan rate — check pin 8 (E) and `PANEL_RES_Y` |
+| Image doubled or squashed vertically | Wrong scan rate - check pin 8 (E) and `PANEL_RES_Y` |
 | Panels in the wrong order | `PANEL_CHAIN_TYPE` doesn't match how you wired the chain |
-| Serial monitor unreadable | GPIO 1 is CLK on this build — see the caution above |
+| Serial monitor unreadable | GPIO 1 is CLK on this build - see the caution above |
 
 More troubleshooting in [SETUP.md](SETUP.md#troubleshooting).

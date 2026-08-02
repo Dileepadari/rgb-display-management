@@ -461,7 +461,7 @@
    The ADK DEV glyph is a single-colour shape, so it's used as a mask rather
    than an image: the element's background shows through the logo silhouette.
    That way it takes the theme's own accent in both light and dark instead of
-   staying a fixed deep violet that vanishes on a dark ground — and there's no
+   staying a fixed deep violet that vanishes on a dark ground - and there's no
    light tile behind it. */
 .brand-mark {
   background-color: var(--primary);

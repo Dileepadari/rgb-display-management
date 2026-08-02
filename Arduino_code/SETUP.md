@@ -21,13 +21,13 @@ you the same thing with a GUI.
 
 ## 2. Wiring
 
-The panel-to-ESP32 connection — the 16-pin HUB75 connector, the GPIO map, power
-and chaining — is in **[README.md](README.md)**. Do that first; nothing below
+The panel-to-ESP32 connection - the 16-pin HUB75 connector, the GPIO map, power
+and chaining - is in **[README.md](README.md)**. Do that first; nothing below
 will show anything on a panel that isn't wired.
 
 Short version: the ESP32 goes to the panel's **IN** connector, the two must
 share a ground, and the panel needs its own 5V supply (roughly 4 A per 64×64
-module — USB cannot do it).
+module - USB cannot do it).
 
 ## 3. Declare your panel arrangement - `include/panel_config.h`
 
