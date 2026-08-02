@@ -28,6 +28,7 @@ import {
   Menu,
   Moon,
   Sun,
+  Cable,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -46,6 +47,7 @@ const navItems = [
   { id: "devices", label: "Devices", icon: Zap },
   { id: "playlists", label: "Playlists", icon: Play },
   { id: "moods", label: "Moods", icon: Smile },
+  { id: "hardware", label: "Hardware", icon: Cable },
   { id: "admin", label: "Admin", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
 ]

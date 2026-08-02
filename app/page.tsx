@@ -11,6 +11,7 @@ import { PlaylistManagerComplete } from "@/components/playlist-manager-complete"
 import { MoodBoardComplete } from "@/components/mood-board-complete"
 import AdminDashboard from "@/components/admin-dashboard"
 import { SettingsPage } from "@/components/settings-page"
+import { HardwareGuide } from "@/components/hardware-guide"
 import AuthPage from "@/components/auth-page"
 
 export default function Home() {
@@ -47,6 +48,7 @@ export default function Home() {
         {currentPage === "playlists" && <PlaylistManagerComplete />}
         {currentPage === "moods" && <MoodBoardComplete />}
         {currentPage === "admin" && <AdminDashboard onNavigate={setCurrentPage} />}
+        {currentPage === "hardware" && <HardwareGuide />}
         {currentPage === "settings" && <SettingsPage />}
       </main>
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onNavigate={setCurrentPage} />
