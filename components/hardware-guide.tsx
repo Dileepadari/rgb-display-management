@@ -104,11 +104,11 @@ export function HardwareGuide() {
     <div className="w-full space-y-6 px-4 py-6 md:px-8 lg:px-10">
       <PageHeader
         title="Hardware"
-        purpose="Wire a panel to a board, flash it, and get it showing your scenes — start to finish."
+        purpose="Wire a panel to a board, flash it, and get it showing your scenes - start to finish."
         howTo={
           <ul>
             <li>Pick your board at the top; the wiring and steps below change to match it.</li>
-            <li>Do the wiring before the software — nothing on screen helps a panel that isn&apos;t connected.</li>
+            <li>Do the wiring before the software - nothing on screen helps a panel that isn&apos;t connected.</li>
             <li>Everything here is also in the repo, under <code>Arduino_code/</code>.</li>
           </ul>
         }
@@ -166,7 +166,7 @@ export function HardwareGuide() {
                 <li>
                   <strong className="text-foreground">{board.label}</strong>
                 </li>
-                <li>One or more <strong className="text-foreground">64&times;64 HUB75 panels</strong> — all the same size</li>
+                <li>One or more <strong className="text-foreground">64&times;64 HUB75 panels</strong> - all the same size</li>
                 <li>
                   A <strong className="text-foreground">5V power supply</strong>, roughly 4&nbsp;A per panel
                 </li>
@@ -174,7 +174,7 @@ export function HardwareGuide() {
               </ul>
               <p className="border-l-2 border-warning bg-warning/5 rounded-r px-4 py-3">
                 <strong>USB cannot power a panel.</strong> One fully-lit 64&times;64 panel draws around 4&nbsp;A;
-                USB gives you 0.5&nbsp;A. Trying it browns out the board — it&apos;s the most common reason
+                USB gives you 0.5&nbsp;A. Trying it browns out the board - it&apos;s the most common reason
                 &ldquo;it doesn&apos;t work&rdquo;.
               </p>
             </Step>
@@ -182,7 +182,7 @@ export function HardwareGuide() {
             <Step n={2} title="Wire the panel" icon={Cable}>
               <p className="text-muted-foreground">
                 Panels have two 16-pin headers: <strong className="text-foreground">IN</strong> and{" "}
-                <strong className="text-foreground">OUT</strong>. Connect to <strong className="text-foreground">IN</strong> —
+                <strong className="text-foreground">OUT</strong>. Connect to <strong className="text-foreground">IN</strong> -
                 the silkscreened arrow points away from it. Pin 1 is marked with a triangle or a square solder pad.
               </p>
 
@@ -222,7 +222,7 @@ export function HardwareGuide() {
                 </>
               ) : (
                 <p className="border-l-2 border-warning bg-warning/5 rounded-r px-4 py-3">
-                  There&apos;s no recommended pin map for this board — see the board notes below. Pick free GPIOs
+                  There&apos;s no recommended pin map for this board - see the board notes below. Pick free GPIOs
                   and set them in the <code>i2s_pins</code> struct in <code>src/main.cpp</code>.
                 </p>
               )}
@@ -250,7 +250,7 @@ PSU GND ─┬── panel GND
          └── board GND      ← REQUIRED`}</Code>
               <p className="text-muted-foreground">
                 <strong className="text-foreground">The board and the panel must share a ground.</strong> Without
-                it the data lines have no common reference, and you get flicker, wrong colours, or nothing — even
+                it the data lines have no common reference, and you get flicker, wrong colours, or nothing - even
                 though the wiring looks right.
               </p>
               <p className="text-muted-foreground">
@@ -262,14 +262,14 @@ PSU GND ─┬── panel GND
             <Step n={4} title="Chain more panels (optional)" icon={Cable}>
               <Code>{`board ──▶ [IN] Panel 1 [OUT] ──▶ [IN] Panel 2 [OUT] ──▶ ...`}</Code>
               <p className="text-muted-foreground">
-                Data chaining needs no extra GPIO wiring — only the first panel connects to the board. Then
+                Data chaining needs no extra GPIO wiring - only the first panel connects to the board. Then
                 declare the shape in <code>Arduino_code/include/panel_config.h</code>:
               </p>
               <Code>{`#define PANEL_GRID_ROWS 3   // panels tall
 #define PANEL_GRID_COLS 3   // panels wide
 #define PANEL_CHAIN_TYPE CHAIN_TOP_LEFT_DOWN`}</Code>
               <p className="text-muted-foreground">
-                This is a compile-time constant — the driver needs it before any network traffic — so rearranging
+                This is a compile-time constant - the driver needs it before any network traffic - so rearranging
                 panels means reflashing. Changing what&apos;s <em>displayed</em> never does.
               </p>
             </Step>
@@ -294,7 +294,7 @@ pio device monitor        # 115200 baud`}</Code>
                   Add the device on the <strong className="text-foreground">Devices</strong> page, using the same
                   device ID you flashed.
                 </li>
-                <li>Set the wall shape, brightness and timezone there — those need no reflash.</li>
+                <li>Set the wall shape, brightness and timezone there - those need no reflash.</li>
                 <li>
                   Press <strong className="text-foreground">Identify</strong> to push a test pattern and confirm
                   orientation and chain order.
@@ -319,12 +319,12 @@ pio device monitor        # 115200 baud`}</Code>
               {[
                 ["Nothing lights up at all", "No 5V at the panel, or no shared ground with the board."],
                 ["Flickering or random pixels", "Undersized supply, or a missing common ground."],
-                ["Red and blue swapped", "R and B lines crossed — check pins 1/3 and 5/7."],
+                ["Red and blue swapped", "R and B lines crossed - check pins 1/3 and 5/7."],
                 ["Top half fine, bottom half dark", "R2/G2/B2 (pins 5-7) not connected."],
-                ["Image doubled or squashed", "Wrong scan rate — check pin 8 (E) and PANEL_RES_Y."],
-                ["Board dies when the ribbon is plugged in", "A strapping pin is being held high at boot — GPIO 12 is the usual culprit."],
+                ["Image doubled or squashed", "Wrong scan rate - check pin 8 (E) and PANEL_RES_Y."],
+                ["Board dies when the ribbon is plugged in", "A strapping pin is being held high at boot - GPIO 12 is the usual culprit."],
                 ["Panels in the wrong order", "PANEL_CHAIN_TYPE doesn't match how you wired the chain."],
-                ["Serial monitor unreadable", "CLK is on a UART pin — move it to a free GPIO."],
+                ["Serial monitor unreadable", "CLK is on a UART pin - move it to a free GPIO."],
                 ["Device never shows as online", "The heartbeat needs an external scheduler; see DEVDOC.md."],
               ].map(([symptom, cause]) => (
                 <div key={symptom} className="px-6 py-3">

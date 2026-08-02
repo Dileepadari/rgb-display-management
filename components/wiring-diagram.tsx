@@ -3,7 +3,7 @@
 import { HUB75_PINS, SIGNAL_OF, type PinKind, type PinMap } from "@/lib/board-profiles"
 
 // The same ladder as Arduino_code/docs/wiring.svg, but built from the selected
-// board's pin map rather than baked in — so switching board in the guide
+// board's pin map rather than baked in - so switching board in the guide
 // redraws the wiring instead of showing a diagram that quietly disagrees with
 // the table underneath it.
 

@@ -15,7 +15,7 @@ export const HUB75_PINS = [
   { pin: 5, signal: "R2", kind: "red", role: "Red, lower half" },
   { pin: 6, signal: "G2", kind: "green", role: "Green, lower half" },
   { pin: 7, signal: "B2", kind: "blue", role: "Blue, lower half" },
-  { pin: 8, signal: "E", kind: "address", role: "Row address bit 4 — GND on 64x32 panels" },
+  { pin: 8, signal: "E", kind: "address", role: "Row address bit 4 - GND on 64x32 panels" },
   { pin: 9, signal: "A", kind: "address", role: "Row address bit 0" },
   { pin: 10, signal: "B", kind: "address", role: "Row address bit 1" },
   { pin: 11, signal: "C", kind: "address", role: "Row address bit 2" },
@@ -67,7 +67,7 @@ export interface BoardProfile {
 
 // Avoids every ESP32 strapping pin (0/2/5/12/15), both UART pins (1/3), the
 // flash pins (6-11) and the input-only pins (34-39). Derived from the chip's
-// pin restrictions — see the note on the board profile.
+// pin restrictions - see the note on the board profile.
 const DEVKIT_SAFE: PinMap = {
   r1: 25, g1: 26, b1: 27,
   r2: 14, g2: 13, b2: 4,
@@ -84,7 +84,7 @@ const AS_BUILT: PinMap = {
 }
 
 // WROVER's PSRAM occupies GPIO 16 and 17, which leaves only 13 unrestricted
-// pins for 14 signals — so exactly one strapping pin is unavoidable. GPIO 5 is
+// pins for 14 signals - so exactly one strapping pin is unavoidable. GPIO 5 is
 // the mildest (it only sets SDIO timing and has an internal pull-up), and it's
 // put on E rather than CLK to keep it off the most timing-critical line.
 const WROVER: PinMap = {
@@ -100,13 +100,13 @@ export const BOARDS: BoardProfile[] = [
     label: "ESP32 DevKit",
     family: "ESP32",
     support: "full",
-    summary: "DOIT DevKit V1, ESP32-DevKitC, NodeMCU-32S — the usual 30/38-pin board.",
+    summary: "DOIT DevKit V1, ESP32-DevKitC, NodeMCU-32S - the usual 30/38-pin board.",
     pioBoard: "esp32dev",
     pins: DEVKIT_SAFE,
     notes: [
-      "This map deliberately avoids all four strapping pins. GPIO 12 in particular will stop the board booting if a panel holds it high at power-on — the symptom is a board that works alone but goes dead the moment the ribbon is plugged in.",
+      "This map deliberately avoids all four strapping pins. GPIO 12 in particular will stop the board booting if a panel holds it high at power-on - the symptom is a board that works alone but goes dead the moment the ribbon is plugged in.",
       "It also leaves GPIO 1 free, so the serial monitor stays readable while the panel is running.",
-      "Derived from the ESP32's pin restrictions rather than from a tested build — change one thing at a time with the serial monitor open.",
+      "Derived from the ESP32's pin restrictions rather than from a tested build - change one thing at a time with the serial monitor open.",
     ],
   },
   {
@@ -118,7 +118,7 @@ export const BOARDS: BoardProfile[] = [
     pioBoard: "upesy_wroom",
     pins: AS_BUILT,
     notes: [
-      "Uses GPIO 12, 15, 5 and 2 — all strapping pins — plus GPIO 1, which is the USB serial TX. It works on the board it was built for, but it is not the map to copy onto a fresh DevKit.",
+      "Uses GPIO 12, 15, 5 and 2 - all strapping pins - plus GPIO 1, which is the USB serial TX. It works on the board it was built for, but it is not the map to copy onto a fresh DevKit.",
       "Because CLK sits on GPIO 1, serial output is unreliable while the panel is running.",
       "If your wiring already matches this and it boots, leave it alone.",
     ],
@@ -133,7 +133,7 @@ export const BOARDS: BoardProfile[] = [
     pins: WROVER,
     notes: [
       "GPIO 16 and 17 are wired to the PSRAM and cannot be used for the panel.",
-      "That leaves 13 unrestricted pins for 14 signals, so one strapping pin is unavoidable. GPIO 5 is used for E — it only sets SDIO timing and has an internal pull-up, making it the safest of the five.",
+      "That leaves 13 unrestricted pins for 14 signals, so one strapping pin is unavoidable. GPIO 5 is used for E - it only sets SDIO timing and has an internal pull-up, making it the safest of the five.",
       "The extra RAM is genuinely useful here: large images and long playlists are what run this chip out of memory.",
     ],
   },
@@ -145,7 +145,7 @@ export const BOARDS: BoardProfile[] = [
     summary: "Supported by the display driver, but this firmware needs configuration changes.",
     pioBoard: "esp32-s3-devkitc-1",
     notes: [
-      "The driver supports the S3 — it drives the panel through the LCD peripheral rather than I2S — but this firmware has only been built and run against the original ESP32.",
+      "The driver supports the S3 - it drives the panel through the LCD peripheral rather than I2S - but this firmware has only been built and run against the original ESP32.",
       "Almost any GPIO can be used on the S3, so there is no single recommended map. Avoid the pins your specific module uses for flash and PSRAM (often 26-32, and 33-37 on octal-PSRAM modules); check your board's datasheet.",
       "Set the pins in the `i2s_pins` struct in src/main.cpp as usual, and expect to adjust clock speed if the panel flickers.",
     ],
@@ -158,7 +158,7 @@ export const BOARDS: BoardProfile[] = [
     summary: "Supported by the display driver; single-core, and untested with this firmware.",
     pioBoard: "esp32-s2-saola-1",
     notes: [
-      "Listed as supported by the display driver, but the S2 is single-core — WiFi, HTTPS and the render loop all share one core, so expect lower frame rates than the original ESP32.",
+      "Listed as supported by the display driver, but the S2 is single-core - WiFi, HTTPS and the render loop all share one core, so expect lower frame rates than the original ESP32.",
       "No recommended pin map: choose free GPIOs on your module and set them in the `i2s_pins` struct.",
     ],
   },
@@ -183,7 +183,7 @@ export const BOARDS: BoardProfile[] = [
       "These are 8-bit AVR boards at 16 MHz with 2-8 KB of RAM. A single 64x64 frame alone is more memory than they have, and they cannot refresh a HUB75 panel at a usable rate.",
       "They also have no WiFi, so they could not fetch scenes from the web app at all.",
     ],
-    alternative: "Use an ESP32 DevKit — it is comparable in price and is what this firmware targets.",
+    alternative: "Use an ESP32 DevKit - it is comparable in price and is what this firmware targets.",
   },
   {
     id: "arduino-r4-wifi",
@@ -234,10 +234,10 @@ const INPUT_ONLY = new Set([34, 35, 36, 37, 38, 39])
 
 /** A warning for this GPIO on a classic ESP32, or null when it's unremarkable. */
 export function pinCaution(gpio: number): string | null {
-  if (FLASH.has(gpio)) return "Wired to the flash chip — must not be used"
-  if (INPUT_ONLY.has(gpio)) return "Input-only — cannot drive a panel"
+  if (FLASH.has(gpio)) return "Wired to the flash chip - must not be used"
+  if (INPUT_ONLY.has(gpio)) return "Input-only - cannot drive a panel"
   if (gpio === 12) return "Strapping pin: held high at boot, the board will not start"
-  if (STRAPPING.has(gpio)) return "Strapping pin — read by the chip at boot"
-  if (UART.has(gpio)) return "USB serial pin — serial output becomes unreliable"
+  if (STRAPPING.has(gpio)) return "Strapping pin - read by the chip at boot"
+  if (UART.has(gpio)) return "USB serial pin - serial output becomes unreliable"
   return null
 }
