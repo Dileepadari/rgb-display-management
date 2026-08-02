@@ -64,7 +64,7 @@ is what plays.
 | `app/` | Next.js App Router - pages and the API routes the browser and the device call |
 | `components/` | UI. The `*-complete.tsx` files are the live pages |
 | `lib/` | Shared logic: scene schema, compositor, sprites, mood lifecycle, panel layouts |
-| `Arduino_code/` | ESP32 firmware (PlatformIO). See `Arduino_code/SETUP.md` for wiring and flashing |
+| `Arduino_code/` | ESP32 firmware (PlatformIO). `README.md` there covers wiring, `SETUP.md` covers flashing |
 | `scripts/` | SQL migrations, the sprite-header generator, and parity tests |
 
 ## Getting started
@@ -72,5 +72,7 @@ is what plays.
 See **[DEVDOC.md](DEVDOC.md)** for requirements, setup, how to run it, and how
 the code is organised.
 
-For wiring the panels and flashing the ESP32, see
+For the hardware side — the 16-pin HUB75 connector, GPIO map, power and
+chaining — see **[Arduino_code/README.md](Arduino_code/README.md)**. For
+flashing and configuring the firmware, see
 **[Arduino_code/SETUP.md](Arduino_code/SETUP.md)**.

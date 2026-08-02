@@ -19,27 +19,15 @@ pipx install platformio   # or: pip install --user platformio
 VS Code users can instead install the "PlatformIO IDE" extension, which gives
 you the same thing with a GUI.
 
-## 2. Wiring - GPIO pin map
+## 2. Wiring
 
-Unchanged from the previous firmware; the new library uses the exact same pins:
+The panel-to-ESP32 connection — the 16-pin HUB75 connector, the GPIO map, power
+and chaining — is in **[README.md](README.md)**. Do that first; nothing below
+will show anything on a panel that isn't wired.
 
-| Signal | GPIO | Signal | GPIO |
-|---|---|---|---|
-| R1 | 27 | A | 32 |
-| G1 | 26 | B | 17 |
-| B1 | 14 | C | 33 |
-| R2 | 12 | D | 16 |
-| G2 | 25 | E | 5 |
-| B2 | 15 | LAT | 2 |
-| CLK | 1 | OE | 4 |
-
-If you're building a *new* controller and wiring from scratch, any pins work -
-just update the `pins` struct at the top of `setupMatrix()` in `src/main.cpp`
-to match, in this exact order: `r1, g1, b1, r2, g2, b2, a, b, c, d, e, lat, oe, clk`.
-
-Chaining multiple panels: HUB75 chaining is just each panel's OUT connector
-into the next panel's IN connector. No extra GPIO wiring per panel - the
-address lines (A–E) and data lines fan through the whole chain electrically.
+Short version: the ESP32 goes to the panel's **IN** connector, the two must
+share a ground, and the panel needs its own 5V supply (roughly 4 A per 64×64
+module — USB cannot do it).
 
 ## 3. Declare your panel arrangement - `include/panel_config.h`
 

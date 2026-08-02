@@ -96,6 +96,9 @@ pio run --target upload      # flash
 pio device monitor           # serial log, 115200 baud
 ```
 
+Wiring (HUB75 connector, GPIO map, power) is in
+[`Arduino_code/README.md`](Arduino_code/README.md).
+
 Before flashing, copy `include/secrets.example.h` to `include/secrets.h` and
 fill in WiFi, the backend URL, the device token, and the ThingSpeak keys. The
 device token is the `device_api_token` column on that device's row. `secrets.h`
